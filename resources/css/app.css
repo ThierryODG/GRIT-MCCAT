@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+ .login-container {
+                min-height: 100vh;
+                display: flex;
+            }
+
+            .login-left {
+                flex: 1;
+                background: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 2rem;
+            }
+
+            .login-right {
+                flex: 1;
+                background: #f8fafc;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                position: relative;
+                overflow: hidden;
+            }
+
+            /* Motif discret en arrière-plan */
+            .background-pattern {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                opacity: 0.03;
+                background-image:
+                    radial-gradient(circle at 25% 25%, #000 2%, transparent 2.5%),
+                    radial-gradient(circle at 75% 75%, #000 2%, transparent 2.5%);
+                background-size: 60px 60px;
+            }
+
+            @media (max-width: 768px) {
+                .login-container {
+                    flex-direction: column;
+                }
+
+                .login-right {
+                    display: none;
+                }
+            }
