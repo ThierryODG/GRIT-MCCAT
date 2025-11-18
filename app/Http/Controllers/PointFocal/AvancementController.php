@@ -5,6 +5,7 @@ namespace App\Http\Controllers\PointFocal;
 use App\Http\Controllers\Controller;
 use App\Models\PlanAction;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AvancementController extends Controller
 {
@@ -13,10 +14,13 @@ class AvancementController extends Controller
      */
     public function index()
     {
-        $plansActions = PlanAction::where('point_focal_id', auth()->id())
+        $plansActions = PlanAction::where('point_focal_id', Auth::id())
             ->where('statut_validation', 'valide_ig') // Validés par l'IG
-            ->with(['recommandation.its:id,name'])
-            ->orderBy('date_debut_prevue', 'asc')
+            ->with(['recommandation' => function ($q) {
+                $q->select('id', 'its_id');
+                $q->with('its:id,name');
+                $q->orderBy('date_debut_prevue', 'asc');
+            }])
             ->paginate(15);
 
         return view('point_focal.avancement.index', compact('plansActions'));
@@ -28,7 +32,7 @@ class AvancementController extends Controller
     public function edit(PlanAction $planAction)
     {
         // Vérifications
-        if ($planAction->point_focal_id !== auth()->id()) {
+        if ($planAction->point_focal_id !== Auth::id()) {
             abort(403, 'Ce plan ne vous est pas assigné.');
         }
 
@@ -48,7 +52,7 @@ class AvancementController extends Controller
     public function update(Request $request, PlanAction $planAction)
     {
         // Vérifications
-        if ($planAction->point_focal_id !== auth()->id()) {
+        if ($planAction->point_focal_id !== Auth::id()) {
             abort(403);
         }
 

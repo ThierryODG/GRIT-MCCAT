@@ -1,69 +1,154 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Tableau de bord Point Focal') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                        <div class="bg-gray-100 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold mb-2">Recommandations</h3>
-                            <div class="text-3xl font-bold">{{ $stats['recommandations'] ?? 0 }}</div>
-                        </div>
-                        <div class="bg-gray-100 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold mb-2">Plans d'action</h3>
-                            <div class="text-3xl font-bold">{{ $stats['plans_action'] ?? 0 }}</div>
-                        </div>
-                        <div class="bg-gray-100 p-4 rounded-lg">
-                            <h3 class="text-lg font-semibold mb-2">Recommandations en retard</h3>
-                            <div class="text-3xl font-bold">{{ $stats['recommandations_retard'] ?? 0 }}</div>
-                        </div>
-                    </div>
-                    <h3 class="text-lg font-semibold mb-4">Recommandations récentes</h3>
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contenu</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date limite</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @forelse ($mesRecommandations as $recommandation)
-                                    <tr>
-                                        <td class="px-6 py-4 text-sm text-gray-700">
-                                            {{ Str::limit($recommandation->contenu, 80) }}
-                                        </td>
-                                        <td class="px-6 py-4 text-sm">
-                                            <span class="px-2 py-1 text-xs rounded-full
-                                                @if($recommandation->statut === 'validee') bg-green-100 text-green-800
-                                                @elseif($recommandation->statut === 'en_attente_validation') bg-yellow-100 text-yellow-800
-                                                @else bg-red-100 text-red-800
-                                                @endif">
-                                                {{ ucfirst(str_replace('_', ' ', $recommandation->statut)) }}
-                                            </span>
-                                        </td>
-                                        <td class="px-6 py-4 text-sm text-gray-700">
-                                            {{ $recommandation->date_limite ? $recommandation->date_limite->format('d/m/Y') : 'Non définie' }}
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
-                                            Aucune recommandation récente
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+@section('title', 'Dashboard Point Focal')
+
+@section('content')
+<div class="container px-4 py-6 mx-auto">
+    <!-- En-tête -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Dashboard Point Focal</h1>
+        <p class="text-gray-600">Vue d'ensemble de vos recommandations et plans d'action</p>
+    </div>
+
+    <!-- Cartes de statistiques -->
+    <div class="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2 lg:grid-cols-4">
+        <!-- Carte Recommandations totales -->
+        <div class="p-6 bg-white rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="p-3 text-blue-600 bg-blue-100 rounded-full">
+                    <i class="text-xl fas fa-list-alt"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Recommandations totales</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $totalRecommandations }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte À traiter -->
+        <div class="p-6 bg-white rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="p-3 text-purple-600 bg-purple-100 rounded-full">
+                    <i class="text-xl fas fa-pencil-alt"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">À traiter</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $attentePlanCount }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte En exécution -->
+        <div class="p-6 bg-white rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="p-3 rounded-full bg-sky-100 text-sky-600">
+                    <i class="text-xl fas fa-play-circle"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">En exécution</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $enExecutionCount }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Carte En retard -->
+        <div class="p-6 bg-white rounded-lg shadow">
+            <div class="flex items-center">
+                <div class="p-3 text-red-600 bg-red-100 rounded-full">
+                    <i class="text-xl fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">En retard</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $enRetardCount }}</p>
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+
+    <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <!-- Section Répartition par statut -->
+        <div class="p-6 bg-white rounded-lg shadow">
+            <h2 class="mb-4 text-lg font-semibold">Répartition par statut</h2>
+            <div class="space-y-3">
+                @foreach($statuts as $statut)
+                <div class="flex items-center justify-between">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statut->color_class }}">
+                        {{ $statut->label }}
+                    </span>
+                    <span class="font-semibold">{{ $statut->count }}</span>
+                </div>
+                @endforeach
+            </div>
+        </div>
+
+        <!-- Section Alertes et échéances -->
+        <div class="p-6 bg-white rounded-lg shadow">
+            <h2 class="mb-4 text-lg font-semibold">Alertes et échéances</h2>
+
+            <!-- Plans en retard -->
+            @if($plansEnRetard->count() > 0)
+            <div class="mb-4">
+                <h3 class="mb-2 font-medium text-red-600">🚨 Plans en retard ({{ $plansEnRetard->count() }})</h3>
+                <div class="space-y-2">
+                    @foreach($plansEnRetard->take(3) as $recommandation)
+                    <div class="pl-3 text-sm text-gray-700 border-l-4 border-red-500">
+                        <a href="{{ route('point_focal.recommandations.show', $recommandation) }}" class="font-medium hover:text-blue-600">
+                            {{ $recommandation->reference }}
+                        </a>
+                        <p class="text-gray-500">Échéance: {{ $recommandation->date_fin_prevue->format('d/m/Y') }}</p>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            <!-- Prochaines échéances -->
+            @if($prochainesEcheances->count() > 0)
+            <div>
+                <h3 class="mb-2 font-medium text-amber-600">📅 Prochaines échéances (7 jours)</h3>
+                <div class="space-y-2">
+                    @foreach($prochainesEcheances as $recommandation)
+                    <div class="pl-3 text-sm text-gray-700 border-l-4 border-amber-500">
+                        <a href="{{ route('point_focal.recommandations.show', $recommandation) }}" class="font-medium hover:text-blue-600">
+                            {{ $recommandation->reference }}
+                        </a>
+                        <p class="text-gray-500">Échéance: {{ $recommandation->date_fin_prevue->format('d/m/Y') }}</p>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+        </div>
+    </div>
+
+    <!-- Recommandations récentes -->
+    <div class="mt-8 bg-white rounded-lg shadow">
+        <div class="px-6 py-4 border-b">
+            <h2 class="text-lg font-semibold">Recommandations récentes</h2>
+        </div>
+        <div class="p-6">
+            @if($recentRecommandations->count() > 0)
+            <div class="space-y-4">
+                @foreach($recentRecommandations as $recommandation)
+                <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                    <div>
+                        <a href="{{ route('point_focal.recommandations.show', $recommandation) }}"
+                           class="font-medium text-blue-600 hover:text-blue-800">
+                            {{ $recommandation->reference }} - {{ $recommandation->titre }}
+                        </a>
+                        <p class="text-sm text-gray-600">{{ $recommandation->structure->nom }}</p>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {{ $statuts->firstWhere('statut', $recommandation->statut)?->color_class ?? 'bg-gray-100 text-gray-800' }}">
+                        {{ $statuts->firstWhere('statut', $recommandation->statut)?->label ?? $recommandation->statut }}
+                    </span>
+                </div>
+                @endforeach
+            </div>
+            @else
+            <p class="py-4 text-center text-gray-500">Aucune recommandation assignée.</p>
+            @endif
+        </div>
+    </div>
+</div>
+@endsection

@@ -18,6 +18,8 @@ Route::prefix('its')->middleware(['auth', /*'its'*/])->name('its.')->group(funct
     Route::get('/recommandations/{recommandation}', [RecommandationController::class, 'show'])->name('recommandations.show');
     Route::get('/recommandations/{recommandation}/edit', [RecommandationController::class, 'edit'])->name('recommandations.edit');
     Route::put('/recommandations/{recommandation}', [RecommandationController::class, 'update'])->name('recommandations.update');
+    Route::delete('/recommandations/{recommandation}', [RecommandationController::class, 'destroy'])
+    ->name('recommandations.destroy');
 
     // Clôture
     Route::get('/cloture', [ClotureController::class, 'index'])->name('cloture.index');

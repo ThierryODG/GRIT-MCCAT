@@ -1,116 +1,220 @@
-<x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-                {{ __('Détails de la Recommandation') }}
-            </h2>
-            <div class="space-x-4">
-                <a href="{{ route('responsable.suivi.index') }}" class="inline-flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-200 border border-transparent rounded-md font-semibold text-xs text-white dark:text-gray-800 uppercase tracking-widest hover:bg-gray-700 dark:hover:bg-white focus:bg-gray-700 dark:focus:bg-white active:bg-gray-900 dark:active:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition ease-in-out duration-150">
-                    {{ __('Retour') }}
-                </a>
-            </div>
-        </div>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                        Informations de la Recommandation
-                    </h3>
-                    <dl class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Libellé</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $recommandation->libelle }}</dd>
+@section('title', 'Détails - ' . $recommandation->reference)
+
+@section('content')
+<div class="space-y-6">
+    <!-- En-tête -->
+    <div class="flex items-start justify-between">
+        <div>
+            <div class="flex items-center mb-2 space-x-3">
+                <span class="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-800 bg-blue-100 rounded-full">
+                    {{ $recommandation->reference }}
+                </span>
+                <h1 class="text-2xl font-bold text-gray-900">{{ $recommandation->titre }}</h1>
+            </div>
+            <p class="text-gray-600">Détails complets de la recommandation et suivi</p>
+        </div>
+
+        <div class="flex space-x-3">
+            <a href="{{ route('responsable.suivi.index') }}"
+               class="px-4 py-2 text-white transition-colors bg-gray-500 rounded-lg hover:bg-gray-600">
+                Retour
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <!-- Colonne principale -->
+        <div class="space-y-6 lg:col-span-2">
+            <!-- Description -->
+            <div class="p-6 bg-white border border-gray-200 rounded-xl">
+                <h2 class="mb-4 text-lg font-semibold text-gray-900">Description</h2>
+                <p class="text-gray-700 whitespace-pre-wrap">{{ $recommandation->description }}</p>
+            </div>
+
+            <!-- Plan d'action -->
+            @if($recommandation->planAction)
+            <div class="p-6 bg-white border border-gray-200 rounded-xl">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-semibold text-gray-900">Plan d'Action</h2>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        @if($recommandation->planAction->statut_validation === 'valide_ig') bg-green-100 text-green-800
+                        @elseif($recommandation->planAction->statut_validation === 'valide_responsable') bg-blue-100 text-blue-800
+                        @elseif($recommandation->planAction->statut_validation === 'en_attente_responsable') bg-yellow-100 text-yellow-800
+                        @elseif($recommandation->planAction->statut_validation === 'rejete_responsable') bg-red-100 text-red-800
+                        @else bg-gray-100 text-gray-800 @endif">
+                        {{ $recommandation->planAction->statut_validation_label }}
+                    </span>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">Actions</label>
+                        <div class="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                            <p class="text-gray-700 whitespace-pre-wrap">{{ $recommandation->planAction->action ?? 'Non spécifié' }}</p>
                         </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Point Focal</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $recommandation->pointFocal->name ?? 'Non assigné' }}</dd>
+                    </div>
+
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">Indicateurs</label>
+                        <div class="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                            <p class="text-gray-700 whitespace-pre-wrap">{{ $recommandation->indicateurs ?? 'Non spécifié' }}</p>
                         </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Date de création</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $recommandation->created_at->format('d/m/Y') }}</dd>
+                    </div>
+
+                    <!-- Avancement -->
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-700">Avancement</label>
+                        <div class="flex items-center space-x-3">
+                            <div class="w-full h-3 bg-gray-200 rounded-full">
+                                <div class="h-3 transition-all duration-300 bg-green-600 rounded-full"
+                                     style="width: {{ $recommandation->planAction->pourcentage_avancement }}%"></div>
+                            </div>
+                            <span class="text-sm font-medium text-gray-700 whitespace-nowrap">
+                                {{ $recommandation->planAction->pourcentage_avancement }}%
+                            </span>
                         </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Statut</dt>
-                            <dd class="mt-1">
-                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                    @if($recommandation->planAction?->status === 'en_cours') bg-yellow-100 text-yellow-800
-                                    @elseif($recommandation->planAction?->status === 'termine') bg-green-100 text-green-800
-                                    @else bg-red-100 text-red-800
-                                    @endif">
-                                    {{ $recommandation->planAction?->status ? ucfirst(str_replace('_', ' ', $recommandation->planAction->status)) : 'En attente' }}
-                                </span>
-                            </dd>
+                        <div class="mt-2 text-sm text-gray-600">
+                            Statut: {{ $recommandation->planAction->statut_execution_label }}
                         </div>
-                    </dl>
+                    </div>
+
+                    @if($recommandation->planAction->commentaire_avancement)
+                    <div>
+                        <label class="block mb-1 text-sm font-medium text-gray-700">Commentaires du point focal</label>
+                        <div class="p-4 border border-blue-200 rounded-lg bg-blue-50">
+                            <p class="text-blue-700 whitespace-pre-wrap">{{ $recommandation->planAction->commentaire_avancement }}</p>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
-
-            @if($recommandation->planAction)
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                        Plan d'Action
-                    </h3>
-                    <dl class="grid grid-cols-1 gap-4">
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Description</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $recommandation->planAction->description }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Progression</dt>
-                            <dd class="mt-1">
-                                <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700">
-                                    <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ $recommandation->planAction->progression }}%"></div>
-                                </div>
-                                <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                    {{ $recommandation->planAction->progression }}%
-                                </div>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Date de début</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $recommandation->planAction->date_debut?->format('d/m/Y') ?? 'Non définie' }}</dd>
-                        </div>
-                        <div>
-                            <dt class="text-sm font-medium text-gray-500 dark:text-gray-400">Date de fin prévue</dt>
-                            <dd class="mt-1 text-sm text-gray-900 dark:text-gray-100">{{ $recommandation->planAction->date_fin_prevue?->format('d/m/Y') ?? 'Non définie' }}</dd>
-                        </div>
-                    </dl>
+            @else
+            <div class="p-6 bg-white border border-gray-200 rounded-xl">
+                <div class="py-8 text-center">
+                    <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    <p class="mt-4 text-gray-500">Aucun plan d'action créé pour le moment</p>
                 </div>
             </div>
             @endif
+        </div>
 
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                        Historique des Rapports
-                    </h3>
-                    @if($recommandation->rapports->isEmpty())
-                        <p class="text-gray-500 dark:text-gray-400">Aucun rapport disponible.</p>
-                    @else
-                        <div class="space-y-4">
-                            @foreach($recommandation->rapports as $rapport)
-                                <div class="border dark:border-gray-700 rounded-lg p-4">
-                                    <div class="flex justify-between items-start mb-2">
-                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                            {{ $rapport->created_at->format('d/m/Y H:i') }}
-                                        </div>
-                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
-                                            {{ ucfirst($rapport->type) }}
-                                        </span>
-                                    </div>
-                                    <p class="text-sm text-gray-600 dark:text-gray-300">
-                                        {{ $rapport->contenu }}
-                                    </p>
-                                </div>
-                            @endforeach
+        <!-- Colonne latérale -->
+        <div class="space-y-6">
+            <!-- Informations générales -->
+            <div class="p-6 bg-white border border-gray-200 rounded-xl">
+                <h3 class="mb-4 text-lg font-semibold text-gray-900">Informations Générales</h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Priorité</p>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            @if($recommandation->priorite === 'haute') bg-red-100 text-red-800
+                            @elseif($recommandation->priorite === 'moyenne') bg-yellow-100 text-yellow-800
+                            @else bg-green-100 text-green-800 @endif">
+                            {{ ucfirst($recommandation->priorite) }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Date limite</p>
+                        <p class="text-gray-900">{{ $recommandation->date_limite->format('d/m/Y') }}</p>
+                        @if($recommandation->date_limite < now() && !in_array($recommandation->statut, ['cloturee', 'execution_terminee']))
+                        <p class="mt-1 text-xs font-medium text-red-600">⚠️ En retard</p>
+                        @endif
+                    </div>
+
+                    <div>
+                        <p class="text-sm font-medium text-gray-700">Statut</p>
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                            @if(in_array($recommandation->statut, ['cloturee', 'execution_terminee', 'plan_valide_ig'])) bg-green-100 text-green-800
+                            @elseif(in_array($recommandation->statut, ['en_execution', 'plan_valide_responsable'])) bg-blue-100 text-blue-800
+                            @elseif(in_array($recommandation->statut, ['plan_en_redaction', 'plan_soumis_responsable'])) bg-yellow-100 text-yellow-800
+                            @elseif($recommandation->statut === 'point_focal_assigne') bg-purple-100 text-purple-800
+                            @else bg-gray-100 text-gray-800 @endif">
+                            {{ $recommandation->statut_label }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Point Focal -->
+            <div class="p-6 bg-white border border-gray-200 rounded-xl">
+                <h3 class="mb-4 text-lg font-semibold text-gray-900">Point Focal</h3>
+
+                @if($recommandation->pointFocal)
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <div class="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-full">
+                            <span class="font-semibold text-blue-600">
+                                {{ substr($recommandation->pointFocal->name, 0, 1) }}
+                            </span>
                         </div>
+                        <div>
+                            <p class="font-medium text-gray-900">{{ $recommandation->pointFocal->name }}</p>
+                            <p class="text-sm text-gray-500">{{ $recommandation->pointFocal->email }}</p>
+                        </div>
+                    </div>
+
+                    @if($recommandation->pointFocal->telephone)
+                    <div class="flex items-center text-sm text-gray-600">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                        </svg>
+                        {{ $recommandation->pointFocal->telephone }}
+                    </div>
+                    @endif
+                </div>
+                @else
+                <p class="text-sm text-gray-500">Aucun point focal assigné</p>
+                @endif
+            </div>
+
+            <!-- Inspecteur ITS -->
+            <div class="p-6 bg-white border border-gray-200 rounded-xl">
+                <h3 class="mb-4 text-lg font-semibold text-gray-900">Inspecteur ITS</h3>
+
+                <div class="space-y-2">
+                    <p class="text-sm text-gray-900">{{ $recommandation->its->name ?? 'N/A' }}</p>
+                    <p class="text-xs text-gray-500">{{ $recommandation->its->email ?? '' }}</p>
+                </div>
+            </div>
+
+            <!-- Actions rapides -->
+            <div class="p-6 bg-white border border-gray-200 rounded-xl">
+                <h3 class="mb-4 text-lg font-semibold text-gray-900">Actions</h3>
+
+                <div class="space-y-2">
+                    @if(!$recommandation->pointFocal)
+                    <a href="{{ route('responsable.points_focaux.index') }}"
+                       class="block w-full px-4 py-2 text-sm text-center text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700">
+                        Assigner un Point Focal
+                    </a>
+                    @endif
+
+                    @if($recommandation->planAction && $recommandation->planAction->statut_validation === 'en_attente_responsable')
+                    <a href="{{ route('responsable.validation_plans.show', $recommandation->planAction) }}"
+                       class="block w-full px-4 py-2 text-sm text-center text-white transition-colors bg-orange-600 rounded-lg hover:bg-orange-700">
+                        Valider le Plan
+                    </a>
+                    @endif
+
+                    @if($recommandation->planAction && $recommandation->planAction->statut_validation === 'valide_responsable')
+                    <form action="{{ route('responsable.validation_plans.transmettre', $recommandation->planAction) }}" method="POST">
+                        @csrf
+                        <button type="submit"
+                                onclick="return confirm('Transmettre ce plan à l\\'Inspecteur Général ?')"
+                                class="w-full px-4 py-2 text-sm text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700">
+                            Transmettre à l'IG
+                        </button>
+                    </form>
                     @endif
                 </div>
             </div>
         </div>
     </div>
-</x-app-layout>
+</div>
+@endsection

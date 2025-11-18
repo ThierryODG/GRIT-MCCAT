@@ -10,17 +10,24 @@ class Recommandation extends Model
     use HasFactory;
 
     protected $fillable = [
-        'reference',
+        'reference', // Ajoutez ce champ dans fillable
         'titre',
         'description',
         'structure_id',
         'priorite',
         'date_limite',
+        // Champs de planification (un par recommandation)
+        'indicateurs',
+        'incidence_financiere',
+        'delai_mois',
+        'date_debut_prevue',
+        'date_fin_prevue',
         'statut',
         'its_id',
         'inspecteur_general_id',
         'responsable_id',
         'point_focal_id',
+        'date_assignation_pf',
         'date_validation_ig',
         'date_cloture',
         'commentaire_ig',
@@ -33,13 +40,15 @@ class Recommandation extends Model
 
     protected $casts = [
         'date_limite' => 'date',
+        'date_debut_prevue' => 'date',
+        'date_fin_prevue' => 'date',
         'date_validation_ig' => 'datetime',
         'date_cloture' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
 
-    // ==================== BOOT ====================
+    // ==================== BOOT CORRIGÉ ====================
 
     protected static function boot()
     {
@@ -47,11 +56,38 @@ class Recommandation extends Model
 
         static::creating(function ($recommandation) {
             if (empty($recommandation->reference)) {
-                $annee = now()->format('Y');
-                $count = self::whereYear('created_at', $annee)->count() + 1;
-                $recommandation->reference = 'REC-' . $annee . '-' . str_pad($count, 4, '0', STR_PAD_LEFT);
+                $recommandation->reference = self::generateUniqueReference();
             }
         });
+    }
+
+    // ==================== GÉNÉRATION DE RÉFÉRENCE UNIQUE ====================
+
+    private static function generateUniqueReference(): string
+    {
+        $annee = now()->format('Y');
+        $lastRecommandation = self::whereYear('created_at', $annee)
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastRecommandation && preg_match('/REC-'.$annee.'-(\d+)/', $lastRecommandation->reference, $matches)) {
+            $lastNumber = (int) $matches[1];
+            $nextNumber = $lastNumber + 1;
+        } else {
+            $nextNumber = 1;
+        }
+
+        $reference = 'REC-' . $annee . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+
+        // Vérifier que la référence n'existe pas déjà (sécurité supplémentaire)
+        $counter = 0;
+        while (self::where('reference', $reference)->exists() && $counter < 10) {
+            $nextNumber++;
+            $reference = 'REC-' . $annee . '-' . str_pad($nextNumber, 4, '0', STR_PAD_LEFT);
+            $counter++;
+        }
+
+        return $reference;
     }
 
     // ==================== RELATIONS ====================
@@ -76,9 +112,9 @@ class Recommandation extends Model
         return $this->belongsTo(User::class, 'point_focal_id');
     }
 
-    public function planAction()
+    public function plansAction()
     {
-        return $this->hasOne(PlanAction::class);
+        return $this->hasMany(PlanAction::class);
     }
 
     public function notifications()

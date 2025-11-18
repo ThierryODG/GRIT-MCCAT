@@ -13,15 +13,17 @@ Route::prefix('responsable')->middleware(['auth'])->name('responsable.')->group(
 
     // Gestion des Points Focaux
     Route::get('/points-focaux', [PointFocalController::class, 'index'])->name('points_focaux.index');
-    Route::post('/points-focaux/{recommandation}/assigner', [PointFocalController::class, 'assigner'])->name('points_focaux.assigner');
-    Route::post('/points-focaux/{recommandation}/reassigner', [PointFocalController::class, 'reassigner'])->name('points_focaux.reassigner');
+    Route::post('/points-focaux/assigner', [PointFocalController::class, 'assigner'])->name('points_focaux.assigner');
+    Route::put('/points-focaux/{its}/reassigner', [PointFocalController::class, 'reassigner'])->name('points_focaux.reassigner');
+    Route::delete('/points-focaux/{its}/retirer', [PointFocalController::class, 'retirer'])->name('points_focaux.retirer');
 
     // Validation des plans d'action
     Route::get('/validation-plans', [ValidationPlanController::class, 'index'])->name('validation_plans.index');
+    Route::get('/validation-plans/{recommandation}/dossier', [ValidationPlanController::class, 'dossier'])->name('validation_plans.dossier');
     Route::get('/validation-plans/{planAction}', [ValidationPlanController::class, 'show'])->name('validation_plans.show');
-    Route::post('/validation-plans/{planAction}/valider', [ValidationPlanController::class, 'valider'])->name('validation_plans.valider');
-    Route::post('/validation-plans/{planAction}/rejeter', [ValidationPlanController::class, 'rejeter'])->name('validation_plans.rejeter');
-    Route::post('/validation-plans/{planAction}/transmettre', [ValidationPlanController::class, 'transmettre'])->name('validation_plans.transmettre');
+    Route::post('/validation-plans/{recommandation}/valider', [ValidationPlanController::class, 'validerRecommandation'])->name('validation_plans.valider_recommandation');
+    Route::post('/validation-plans/{recommandation}/rejeter', [ValidationPlanController::class, 'rejeterRecommandation'])->name('validation_plans.rejeter_recommandation');
+    Route::post('/validation-plans/{recommandation}/transmettre', [ValidationPlanController::class, 'transmettreIG'])->name('validation_plans.transmettre_ig');
 
     // Suivi des recommandations
     Route::get('/suivi', [SuiviController::class, 'index'])->name('suivi.index');

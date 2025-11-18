@@ -71,14 +71,8 @@ class RecommandationController extends Controller
             'date_limite' => 'required|date|after:today',
         ]);
 
-        // ==================== GÉNÉRATION RÉFÉRENCE ====================
-        $annee = date('Y');
-        $dernierNumero = Recommandation::whereYear('created_at', $annee)->count();
-        $reference = 'REC-' . $annee . '-' . str_pad($dernierNumero + 1, 4, '0', STR_PAD_LEFT);
-
-        // ==================== CRÉATION ====================
+        // La référence sera générée automatiquement par le modèle
         $recommandation = Recommandation::create([
-            'reference' => $reference,
             'titre' => $validated['titre'],
             'description' => $validated['description'],
             'structure_id' => $validated['structure_id'], // ✅ CORRECTION ICI
@@ -90,6 +84,28 @@ class RecommandationController extends Controller
 
         return redirect()->route('its.recommandations.show', $recommandation)
             ->with('success', 'Recommandation créée en brouillon. Vous pouvez la soumettre à l\'IG.');
+    }
+
+    /**
+     * Supprimer une recommandation
+     */
+    public function destroy(Recommandation $recommandation)
+    {
+        // Vérifier que l'utilisateur peut supprimer
+        if ($recommandation->its_id !== Auth::id()) {
+            abort(403, 'Action non autorisée.');
+        }
+
+        // On ne peut supprimer que les brouillons OU les rejetées
+        if (!in_array($recommandation->statut, ['brouillon', 'rejetee_ig'])) {
+            return redirect()->route('its.recommandations.index')
+                ->with('error', 'Seules les recommandations en brouillon ou rejetées peuvent être supprimées.');
+        }
+
+        $recommandation->delete();
+
+        return redirect()->route('its.recommandations.index')
+            ->with('success', 'Recommandation supprimée avec succès.');
     }
 
     /**
@@ -107,7 +123,7 @@ class RecommandationController extends Controller
             'inspecteurGeneral:id,name',
             'responsable:id,name,direction',
             'pointFocal:id,name,telephone',
-            'planAction'
+            'plansAction'
         ]);
 
         return view('its.recommandations.show', compact('recommandation'));
@@ -133,7 +149,7 @@ class RecommandationController extends Controller
         return view('its.recommandations.edit', compact('recommandation', 'structures'));
     }
 
-    /**
+   /**
      * Mettre à jour une recommandation
      */
     public function update(Request $request, Recommandation $recommandation)
@@ -152,13 +168,54 @@ class RecommandationController extends Controller
         $validated = $request->validate([
             'titre' => 'required|string|max:255',
             'description' => 'required|string',
-            'structure_id' => 'required|exists:structures,id', // ✅ AJOUTER ICI
+            'structure_id' => 'required|exists:structures,id',
             'priorite' => 'required|in:haute,moyenne,basse',
             'date_limite' => 'required|date|after:today',
         ]);
 
-        $recommandation->update($validated);
+        // Gestion des actions spécifiques
+        if ($request->has('action')) {
+            switch ($request->action) {
+                case 'resoumettre':
+                    if ($recommandation->statut === 'rejetee_ig') {
+                        // Sauvegarder d'abord les modifications
+                        $recommandation->update([
+                            'titre' => $validated['titre'],
+                            'description' => $validated['description'],
+                            'structure_id' => $validated['structure_id'],
+                            'priorite' => $validated['priorite'],
+                            'date_limite' => $validated['date_limite'],
+                            'statut' => 'soumise_ig',
+                            'motif_rejet_ig' => null,
+                            'commentaire_ig' => null,
+                        ]);
 
+                        return redirect()->route('its.recommandations.index')
+                            ->with('success', 'Recommandation modifiée et renvoyée à l\'Inspecteur Général.');
+                    }
+                    break;
+
+                case 'soumettre':
+                    if ($recommandation->statut === 'brouillon') {
+                        $recommandation->update([
+                            'statut' => 'soumise_ig'
+                        ]);
+
+                        return redirect()->route('its.recommandations.index')
+                            ->with('success', 'Recommandation soumise à l\'Inspecteur Général avec succès.');
+                    }
+                    break;
+
+                default:
+                    // Simple mise à jour sans changement de statut
+                    $recommandation->update($validated);
+                    return redirect()->route('its.recommandations.show', $recommandation)
+                        ->with('success', 'Recommandation mise à jour avec succès.');
+            }
+        }
+
+        // Mise à jour simple si pas d'action spécifique
+        $recommandation->update($validated);
         return redirect()->route('its.recommandations.show', $recommandation)
             ->with('success', 'Recommandation mise à jour avec succès.');
     }

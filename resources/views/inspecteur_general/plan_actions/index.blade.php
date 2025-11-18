@@ -82,21 +82,25 @@
                                     {{ $plan->created_at->format('d/m/Y') }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                                        {{ $plan->statut_validation == 'valide' ? 'bg-green-100 text-green-800' :
-                                           ($plan->statut_validation == 'rejete' ? 'bg-red-100 text-red-800' :
-                                           'bg-yellow-100 text-yellow-800') }}">
-                                        {{ $plan->statut_validation == 'valide' ? 'Validé' :
-                                          ($plan->statut_validation == 'rejete' ? 'Rejeté' : 'En attente') }}
-                                    </span>
+                                    @php
+                                        $status = $plan->statut_validation;
+                                        $statusLabel = $plan->statut_validation_label;
+                                        $statusClass = 'bg-yellow-100 text-yellow-800';
+                                        if (str_contains($status, 'valide')) {
+                                            $statusClass = 'bg-green-100 text-green-800';
+                                        } elseif (str_contains($status, 'rejete')) {
+                                            $statusClass = 'bg-red-100 text-red-800';
+                                        }
+                                    @endphp
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusClass }}">{{ $statusLabel }}</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <a href="{{ route('inspecteur.plan_actions.show', $plan) }}"
+                                    <a href="{{ route('inspecteur_general.plan_actions.show', $plan) }}"
                                        class="text-blue-600 hover:text-blue-900 mr-3">Voir</a>
-                                    @if($plan->statut_validation == 'en_attente')
-                                    <button onclick="openValidationModal({{ $plan->id }})"
+                                        @if($plan->statut_validation == 'en_attente_ig')
+                                        <button onclick="openValidationModal({{ $plan->id }})"
                                             class="text-green-600 hover:text-green-900">Valider</button>
-                                    @endif
+                                        @endif
                                 </td>
                             </tr>
                             @empty

@@ -68,11 +68,6 @@ namespace App\Models{
 /**
  * @property int $id
  * @property string|null $action
- * @property string|null $indicateurs
- * @property string|null $incidence_financiere
- * @property int|null $delai_mois
- * @property \Illuminate\Support\Carbon|null $date_debut_prevue
- * @property \Illuminate\Support\Carbon|null $date_fin_prevue
  * @property string $statut_validation
  * @property string $statut_execution
  * @property int $pourcentage_avancement
@@ -109,14 +104,9 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereCommentaireValidationIg($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereCommentaireValidationResponsable($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereDateDebutPrevue($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereDateFinPrevue($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereDateValidationIg($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereDateValidationResponsable($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereDelaiMois($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereIncidenceFinanciere($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereIndicateurs($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereMotifRejetIg($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereMotifRejetResponsable($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction wherePointFocalId($value)
@@ -130,6 +120,22 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|PlanAction whereValidateurResponsableId($value)
  */
 	class PlanAction extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * @property-read \App\Models\User|null $designateur
+ * @property-read \App\Models\User|null $its
+ * @property-read \App\Models\Recommandation|null $recommandation
+ * @property-read \App\Models\Structure|null $structure
+ * @property-read \App\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PointFocal newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PointFocal newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PointFocal parStructure($structureId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PointFocal pourITS($itsId)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|PointFocal query()
+ */
+	class PointFocal extends \Eloquent {}
 }
 
 namespace App\Models{
@@ -181,13 +187,20 @@ namespace App\Models{
  * @property int $structure_id
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property string|null $date_assignation_pf
+ * @property string|null $indicateurs
+ * @property string|null $incidence_financiere
+ * @property int|null $delai_mois
+ * @property \Illuminate\Support\Carbon|null $date_debut_prevue
+ * @property \Illuminate\Support\Carbon|null $date_fin_prevue
  * @property-read mixed $priorite_color
  * @property-read mixed $statut_label
  * @property-read \App\Models\User|null $inspecteurGeneral
  * @property-read \App\Models\User $its
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Notification> $notifications
  * @property-read int|null $notifications_count
- * @property-read \App\Models\PlanAction|null $planAction
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\PlanAction> $plansAction
+ * @property-read int|null $plans_action_count
  * @property-read \App\Models\User|null $pointFocal
  * @property-read \App\Models\User|null $responsable
  * @property-read \App\Models\Structure $structure
@@ -201,12 +214,18 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereCommentaireDemandeCloture($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereCommentaireIg($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDateAssignationPf($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDateCloture($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDateDebutPrevue($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDateFinPrevue($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDateLimite($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDateValidationIg($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDelaiMois($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDescription($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDocumentsJustificatifs($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereIncidenceFinanciere($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereIndicateurs($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereInspecteurGeneralId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereItsId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereMotifRejetCloture($value)

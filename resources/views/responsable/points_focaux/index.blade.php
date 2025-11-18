@@ -1,146 +1,208 @@
 @extends('layouts.app')
 
-@section('title', 'Gestion des Points Focaux - Responsable')
+@section('title', 'Gestion des Points Focaux')
 
 @section('content')
-<div class="container p-6 mx-auto">
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Gestion des Points Focaux</h1>
-        <p class="text-gray-600">Assigner et réassigner les points focaux aux recommandations</p>
+<div class="container px-4 py-6 mx-auto">
+    <!-- En-tête -->
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-gray-900">Gestion des Points Focaux</h1>
+        <p class="mt-1 text-gray-600">Assignation des ITS aux points focaux de votre structure</p>
     </div>
 
-    <!-- Filtres -->
-    <div class="p-4 mb-6 rounded-lg bg-gray-50">
-        <form method="GET" class="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <!-- Messages de statut -->
+    @if(session('success'))
+    <div class="p-4 mb-6 border border-green-200 rounded-lg bg-green-50">
+        <div class="flex items-center">
+            <i class="mr-3 text-green-500 fas fa-check-circle"></i>
+            <p class="font-medium text-green-800">{{ session('success') }}</p>
+        </div>
+    </div>
+    @endif
+
+    @if(session('error'))
+    <div class="p-4 mb-6 border border-red-200 rounded-lg bg-red-50">
+        <div class="flex items-center">
+            <i class="mr-3 text-red-500 fas fa-exclamation-triangle"></i>
+            <p class="font-medium text-red-800">{{ session('error') }}</p>
+        </div>
+    </div>
+    @endif
+
+    <!-- Section d'assignation -->
+    <div class="p-6 mb-8 bg-white border border-gray-200 rounded-lg shadow-sm">
+        <h2 class="mb-4 text-lg font-semibold text-gray-900">Nouvelle Assignation</h2>
+
+        <form method="POST" action="{{ route('responsable.points_focaux.assigner') }}" class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            @csrf
+
+            <!-- Sélection ITS -->
             <div>
-                <label class="block text-sm font-medium text-gray-700">Statut</label>
-                <select name="statut" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">Tous les statuts</option>
-                    <option value="validee_ig" {{ request('statut') == 'validee_ig' ? 'selected' : '' }}>Validée IG</option>
-                    <option value="transmise_structure" {{ request('statut') == 'transmise_structure' ? 'selected' : '' }}>Transmise structure</option>
-                    <option value="point_focal_assigne" {{ request('statut') == 'point_focal_assigne' ? 'selected' : '' }}>Point focal assigné</option>
-                </select>
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">Point Focal</label>
-                <select name="point_focal" class="block w-full mt-1 border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <option value="">Tous les points focaux</option>
-                    @foreach($pointsFocaux as $pointFocal)
-                        <option value="{{ $pointFocal->id }}" {{ request('point_focal') == $pointFocal->id ? 'selected' : '' }}>
-                            {{ $pointFocal->name }}
-                        </option>
+                <label class="block mb-2 text-sm font-medium text-gray-700">Inspecteur ITS</label>
+                <select name="its_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    <option value="">Sélectionnez un ITS</option>
+                    @foreach($itsList as $its)
+                    <option value="{{ $its->id }}">
+                        {{ $its->name }} ({{ $its->nb_recommandations }} recommandations validées)
+                    </option>
                     @endforeach
                 </select>
             </div>
-            <div class="flex items-end space-x-2">
-                <button type="submit" class="px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700">
-                    Filtrer
+
+            <!-- Sélection Point Focal -->
+            <div>
+                <label class="block mb-2 text-sm font-medium text-gray-700">Point Focal</label>
+                <select name="point_focal_id" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+                    <option value="">Choisissez un point focal</option>
+                    @foreach($pointsFocaux as $pointFocal)
+                    <option value="{{ $pointFocal->id }}">
+                        {{ $pointFocal->name }}
+                    </option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Bouton d'assignation -->
+            <div class="flex items-end">
+                <button type="submit" class="flex items-center justify-center w-full px-4 py-2 font-medium text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700">
+                    <i class="mr-2 fas fa-user-check"></i>Assigner
                 </button>
-                <a href="{{ route('responsable.points_focaux.index') }}"
-                   class="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300">
-                    Réinitialiser
-                </a>
             </div>
         </form>
     </div>
 
-    <!-- Tableau des recommandations -->
-    <div class="overflow-hidden bg-white rounded-lg shadow-md">
-        <table class="min-w-full">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Référence</th>
-                    <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Titre</th>
-                    <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Inspecteur ITS</th>
-                    <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Priorité</th>
-                    <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Point Focal</th>
-                    <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Statut</th>
-                    <th class="px-6 py-3 text-xs font-medium text-left text-gray-500 uppercase">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-200">
-                @forelse($recommandations as $recommandation)
-                <tr>
-                    <td class="px-6 py-4">
-                        <span class="font-medium">{{ $recommandation->reference }}</span>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="font-medium">{{ Str::limit($recommandation->titre, 60) }}</div>
-                    </td>
-                    <td class="px-6 py-4">
-                        {{ $recommandation->its->name ?? 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4">
-                        <span class="px-2 py-1 text-xs font-semibold rounded
-                            {{ $recommandation->priorite === 'haute' ? 'bg-red-100 text-red-800' :
-                               ($recommandation->priorite === 'moyenne' ? 'bg-yellow-100 text-yellow-800' :
-                               'bg-green-100 text-green-800') }}">
-                            {{ $recommandation->priorite }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4">
-                        @if($recommandation->pointFocal)
-                            <span class="text-sm text-gray-900">{{ $recommandation->pointFocal->name }}</span>
-                        @else
-                            <span class="text-sm text-red-600">Non assigné</span>
-                        @endif
-                    </td>
-                    <td class="px-6 py-4">
-                        <span class="px-2 py-1 text-xs font-semibold rounded
-                            {{ $recommandation->statut === 'point_focal_assigne' ? 'bg-green-100 text-green-800' :
-                               ($recommandation->statut === 'validee_ig' ? 'bg-blue-100 text-blue-800' :
-                               'bg-yellow-100 text-yellow-800') }}">
-                            {{ str_replace('_', ' ', $recommandation->statut) }}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4">
-                        <div class="flex space-x-2">
-                            @if(!$recommandation->pointFocal)
-                            <form action="{{ route('responsable.points_focaux.assigner', $recommandation) }}" method="POST">
-                                @csrf
-                                <select name="point_focal_id" class="px-2 py-1 text-sm border rounded" required>
-                                    <option value="">Choisir PF</option>
-                                    @foreach($pointsFocaux as $pointFocal)
+    <!-- Section des assignations existantes -->
+    <div class="overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h2 class="text-lg font-semibold text-gray-900">Assignations en cours</h2>
+            <p class="mt-1 text-sm text-gray-600">ITS avec leurs points focaux assignés</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            @if($assignations->count() > 0)
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Inspecteur ITS</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Point Focal Assigné</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Recommandations</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Date d'assignation</th>
+                        <th class="px-6 py-3 text-xs font-medium tracking-wider text-left text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($assignations as $itsId => $assignation)
+                    <tr class="transition-colors hover:bg-gray-50">
+                        <!-- ITS -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex items-center justify-center w-10 h-10 mr-3 bg-blue-100 rounded-full">
+                                    <i class="text-blue-600 fas fa-user-shield"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $assignation['its']->name }}</div>
+                                    <div class="text-sm text-gray-500">{{ $assignation['its']->email }}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Point Focal -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex items-center justify-center w-10 h-10 mr-3 bg-green-100 rounded-full">
+                                    <i class="text-green-600 fas fa-user-tie"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $assignation['point_focal']->name }}</div>
+                                    <div class="text-sm text-gray-500">{{ $assignation['point_focal']->email }}</div>
+                                </div>
+                            </div>
+                        </td>
+
+                        <!-- Recommandations -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-800 bg-blue-100 rounded-full">
+                                {{ $assignation['nb_recommandations'] }} recommandation(s)
+                            </span>
+                        </td>
+
+                        <!-- Date -->
+                        <td class="px-6 py-4 text-sm text-gray-500 whitespace-nowrap">
+                            {{ \Carbon\Carbon::parse($assignation['date_assignation'])->format('d/m/Y H:i') }}
+                        </td>
+
+                        <!-- Actions -->
+                        <td class="px-6 py-4 text-sm font-medium whitespace-nowrap">
+                            <div class="flex space-x-2">
+                                <!-- Formulaire de réassignation -->
+                                <form method="POST" action="{{ route('responsable.points_focaux.reassigner', $itsId) }}" class="inline">
+                                    @csrf
+                                    @method('PUT')
+                                    <select name="point_focal_id" class="px-2 py-1 mr-2 text-sm border border-gray-300 rounded" onchange="this.form.submit()">
+                                        <option value="">Changer de PF</option>
+                                        @foreach($pointsFocaux as $pointFocal)
                                         <option value="{{ $pointFocal->id }}">{{ $pointFocal->name }}</option>
-                                    @endforeach
-                                </select>
-                                <button type="submit" class="ml-2 text-sm text-green-600 hover:text-green-900">
-                                    Assigner
-                                </button>
-                            </form>
-                            @else
-                            <form action="{{ route('responsable.points_focaux.reassigner', $recommandation) }}" method="POST">
-                                @csrf
-                                <select name="point_focal_id" class="px-2 py-1 text-sm border rounded">
-                                    <option value="">Changer PF</option>
-                                    @foreach($pointsFocaux as $pointFocal)
-                                        <option value="{{ $pointFocal->id }}" {{ $recommandation->point_focal_id == $pointFocal->id ? 'selected' : '' }}>
-                                            {{ $pointFocal->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                                <button type="submit" class="ml-2 text-sm text-blue-600 hover:text-blue-900">
-                                    Modifier
-                                </button>
-                            </form>
-                            @endif
-                        </div>
-                    </td>
-                </tr>
-                @empty
-                <tr>
-                    <td colspan="7" class="px-6 py-4 text-center text-gray-500">
-                        Aucune recommandation trouvée.
-                    </td>
-                </tr>
-                @endforelse
-            </tbody>
-        </table>
+                                        @endforeach
+                                    </select>
+                                </form>
+
+                                <!-- Bouton retirer -->
+                                <form method="POST" action="{{ route('responsable.points_focaux.retirer', $itsId) }}" class="inline">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit"
+                                            onclick="return confirm('Êtes-vous sûr de vouloir retirer l\\'assignation pour cet ITS ?')"
+                                            class="px-3 py-1 text-sm text-red-600 transition-colors rounded hover:text-red-900 bg-red-50 hover:bg-red-100">
+                                        <i class="mr-1 fas fa-times"></i>Retirer
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+            @else
+            <div class="py-12 text-center">
+                <div class="mb-4 text-gray-400">
+                    <i class="text-4xl fas fa-users"></i>
+                </div>
+                <h3 class="mb-2 text-lg font-medium text-gray-900">Aucune assignation en cours</h3>
+                <p class="text-gray-500">Utilisez le formulaire ci-dessus pour assigner un point focal à un ITS.</p>
+            </div>
+            @endif
+        </div>
     </div>
 
-    <!-- Pagination -->
-    <div class="mt-4">
-        {{ $recommandations->links() }}
+    <!-- Section ITS sans assignation -->
+    @if($itsList->whereNotIn('id', $assignations->keys())->count() > 0)
+    <div class="mt-8 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200 bg-orange-50">
+            <h2 class="text-lg font-semibold text-gray-900">ITS en attente d'assignation</h2>
+            <p class="mt-1 text-sm text-gray-600">ITS avec des recommandations validées mais sans point focal assigné</p>
+        </div>
+
+        <div class="p-6">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                @foreach($itsList->whereNotIn('id', $assignations->keys()) as $its)
+                <div class="p-4 transition-colors border border-gray-200 rounded-lg hover:border-orange-300">
+                    <div class="flex items-center mb-3">
+                        <div class="flex items-center justify-center w-8 h-8 mr-3 bg-orange-100 rounded-full">
+                            <i class="text-sm text-orange-600 fas fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">{{ $its->name }}</div>
+                            <div class="text-xs text-gray-500">{{ $its->nb_recommandations }} recommandation(s)</div>
+                        </div>
+                    </div>
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        En attente d'assignation
+                    </span>
+                </div>
+                @endforeach
+            </div>
+        </div>
     </div>
+    @endif
 </div>
 @endsection

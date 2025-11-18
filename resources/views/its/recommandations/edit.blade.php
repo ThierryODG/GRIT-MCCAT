@@ -201,7 +201,10 @@
                             </p>
                             <p><span class="font-medium">Jours restants :</span>
                                 @php
-                                    $joursRestants = now()->diffInDays($recommandation->date_limite, false);
+                                    // Calcul précis des jours restants (sans décimales)
+                                    $aujourdhui = now()->startOfDay();
+                                    $dateLimite = $recommandation->date_limite->startOfDay();
+                                    $joursRestants = $aujourdhui->diffInDays($dateLimite, false);
                                 @endphp
                                 @if($joursRestants < 0)
                                     <span class="font-medium text-red-600">En retard ({{ abs($joursRestants) }} jours)</span>
@@ -216,15 +219,58 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="flex justify-end pt-6 space-x-4 border-t border-gray-200">
-                    <a href="{{ route('its.recommandations.show', $recommandation) }}"
-                       class="px-6 py-3 font-medium text-gray-700 transition duration-200 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <i class="mr-2 fas fa-times"></i>Annuler
-                    </a>
-                    <button type="submit"
-                            class="px-8 py-3 font-medium text-white transition duration-200 bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                        <i class="mr-2 fas fa-save"></i>Enregistrer les modifications
-                    </button>
+                <div class="flex justify-between pt-6 space-x-4 border-t border-gray-200">
+                    <div>
+                        <!-- Bouton supprimer seulement pour les brouillons -->
+                        @if($recommandation->statut === 'brouillon')
+                        <form action="{{ route('its.recommandations.destroy', $recommandation) }}" method="POST" class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit"
+                                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette recommandation ?')"
+                                    class="px-6 py-3 font-medium text-white transition duration-200 bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                <i class="mr-2 fas fa-trash"></i>Supprimer
+                            </button>
+                        </form>
+                        @endif
+                    </div>
+
+                    <div class="flex space-x-4">
+                        <a href="{{ route('its.recommandations.show', $recommandation) }}"
+                        class="px-6 py-3 font-medium text-gray-700 transition duration-200 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <i class="mr-2 fas fa-times"></i>Annuler
+                        </a>
+
+                        <!-- Bouton renvoyer seulement si rejeté -->
+                        @if($recommandation->statut === 'rejetee_ig')
+                        <button type="submit"
+                                name="action"
+                                value="resoumettre"
+                                class="px-8 py-3 font-medium text-white transition duration-200 bg-green-600 border border-transparent rounded-lg shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                            <i class="mr-2 fas fa-paper-plane"></i>Modifier et renvoyer
+                        </button>
+                        @endif
+
+                        <!-- Bouton soumettre seulement si brouillon -->
+                        @if($recommandation->statut === 'brouillon')
+                        <button type="submit"
+                                name="action"
+                                value="soumettre"
+                                class="px-8 py-3 font-medium text-white transition duration-200 bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            <i class="mr-2 fas fa-paper-plane"></i>Soumettre à l'IG
+                        </button>
+                        @endif
+
+                        <!-- Bouton sauvegarder seulement si brouillon -->
+                        @if($recommandation->statut === 'brouillon')
+                        <button type="submit"
+                                name="action"
+                                value="sauvegarder"
+                                class="px-8 py-3 font-medium text-white transition duration-200 bg-gray-600 border border-transparent rounded-lg shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                            <i class="mr-2 fas fa-save"></i>Sauvegarder
+                        </button>
+                        @endif
+                    </div>
                 </div>
             </form>
         </div>

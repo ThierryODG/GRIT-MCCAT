@@ -12,11 +12,6 @@ class PlanAction extends Model
     protected $fillable = [
         // Contenu du plan
         'action',
-        'indicateurs',
-        'incidence_financiere',
-        'delai_mois',
-        'date_debut_prevue',
-        'date_fin_prevue',
 
         // Workflow validation
         'statut_validation',
@@ -41,8 +36,6 @@ class PlanAction extends Model
     ];
 
     protected $casts = [
-        'date_debut_prevue' => 'date',
-        'date_fin_prevue' => 'date',
         'date_validation_responsable' => 'datetime',
         'date_validation_ig' => 'datetime',
         'pourcentage_avancement' => 'integer',
@@ -160,7 +153,7 @@ class PlanAction extends Model
 
     public function estEnRetard(): bool
     {
-        return $this->date_fin_prevue < now()
+        return $this->recommandation->date_fin_prevue < now()
             && $this->statut_execution !== 'termine';
     }
 }

@@ -15,9 +15,10 @@ class PlanActionController extends Controller
      */
     public function index(Request $request)
     {
-        $query = PlanAction::where('statut_validation', 'en_attente_ig')
+        // Inclure les plans déjà validés par le Responsable (pour visibilité IG)
+        $query = PlanAction::whereIn('statut_validation', ['en_attente_ig', 'valide_responsable'])
             ->with([
-                'recommandation.its:id,name,direction',
+                'recommandation.its:id,name',
                 'pointFocal:id,name,telephone',
                 'responsable:id,name'
             ]);
@@ -29,10 +30,10 @@ class PlanActionController extends Controller
             });
         }
 
-        $plansActions = $query->orderBy('created_at', 'asc')
+        $planActions = $query->orderBy('created_at', 'asc')
             ->paginate(15);
 
-        return view('inspecteur_general.plan_actions.index', compact('plansActions'));
+        return view('inspecteur_general.plan_actions.index', compact('planActions'));
     }
 
     /**
@@ -46,7 +47,7 @@ class PlanActionController extends Controller
         }
 
         $planAction->load([
-            'recommandation.its:id,name,direction,telephone',
+            'recommandation.its:id,name,telephone',
             'pointFocal:id,name,telephone',
             'responsable:id,name,telephone'
         ]);

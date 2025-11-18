@@ -98,7 +98,10 @@
                         <label class="block text-sm font-medium text-gray-600">Jours restants</label>
                         <p class="mt-1 text-gray-900">
                             @php
-                                $joursRestants = now()->diffInDays($recommandation->date_limite, false);
+                                // Calcul précis des jours restants (sans décimales)
+                                $aujourdhui = now()->startOfDay();
+                                $dateLimite = $recommandation->date_limite->startOfDay();
+                                $joursRestants = $aujourdhui->diffInDays($dateLimite, false);
                             @endphp
                             @if($joursRestants < 0)
                                 <span class="font-semibold text-red-600">En retard ({{ abs($joursRestants) }} jours)</span>
@@ -111,6 +114,28 @@
                     </div>
                 </div>
             </div>
+            <!-- Motif de rejet -->
+            @if($recommandation->statut === 'rejetee_ig' && ($recommandation->motif_rejet_ig || $recommandation->commentaire_ig))
+            <div class="p-6 bg-white rounded-lg shadow-md">
+                <h2 class="flex items-center mb-4 text-xl font-semibold text-red-800">
+                    <i class="mr-3 text-red-500 fas fa-exclamation-triangle"></i>Motif du rejet par l'Inspecteur Général
+                </h2>
+
+                @if($recommandation->motif_rejet_ig)
+                <div class="p-4 mb-4 border border-red-200 rounded-lg bg-red-50">
+                    <h3 class="mb-2 font-semibold text-red-800">Motif principal :</h3>
+                    <p class="text-red-700">{{ $recommandation->motif_rejet_ig }}</p>
+                </div>
+                @endif
+
+                @if($recommandation->commentaire_ig)
+                <div class="p-4 border border-orange-200 rounded-lg bg-orange-50">
+                    <h3 class="mb-2 font-semibold text-orange-800">Commentaires supplémentaires :</h3>
+                    <p class="text-orange-700">{{ $recommandation->commentaire_ig }}</p>
+                </div>
+                @endif
+            </div>
+            @endif
         </div>
 
         <!-- Sidebar - Informations complémentaires -->
@@ -153,7 +178,7 @@
                 <div class="space-y-2">
                     @if($recommandation->peutEtreModifiee())
                     <a href="{{ route('its.recommandations.edit', $recommandation) }}"
-                       class="flex items-center justify-center w-full px-4 py-2 text-white transition bg-green-600 rounded-md hover:bg-green-700">
+                    class="flex items-center justify-center w-full px-4 py-2 text-white transition bg-green-600 rounded-md hover:bg-green-700">
                         <i class="mr-2 fas fa-edit"></i>Modifier
                     </a>
                     @endif
@@ -169,8 +194,21 @@
                     </form>
                     @endif
 
+                    <!-- Bouton Supprimer UNIQUEMENT pour brouillon ou rejetée -->
+                    @if(in_array($recommandation->statut, ['brouillon', 'rejetee_ig']))
+                    <form action="{{ route('its.recommandations.destroy', $recommandation) }}" method="POST" class="w-full">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                                class="flex items-center justify-center w-full px-4 py-2 text-white transition bg-red-600 rounded-md hover:bg-red-700"
+                                onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette recommandation ? Cette action est irréversible.')">
+                            <i class="mr-2 fas fa-trash"></i>Supprimer
+                        </button>
+                    </form>
+                    @endif
+
                     <a href="{{ route('its.recommandations.index') }}"
-                       class="flex items-center justify-center w-full px-4 py-2 text-white transition bg-gray-500 rounded-md hover:bg-gray-600">
+                    class="flex items-center justify-center w-full px-4 py-2 text-white transition bg-gray-500 rounded-md hover:bg-gray-600">
                         <i class="mr-2 fas fa-list"></i>Liste des recommandations
                     </a>
                 </div>
