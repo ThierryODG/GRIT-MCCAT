@@ -49,9 +49,14 @@ class RapportController extends Controller
         ];
 
         // Répartition par structure
-        $parStructure = $recommandations->groupBy('its.direction')
-            ->map->count()
-            ->sortDesc();
+        $parStructure = $recommandations->groupBy(function($r) {
+            $its = $r->its;
+            if ($its && $its->relationLoaded('structure')) {
+                return $its->structure?->nom ?? 'Inconnu';
+            }
+            // Fallback: try to access via relation or return 'Inconnu'
+            return $its && $its->structure ? $its->structure->nom : 'Inconnu';
+        })->map->count()->sortDesc();
 
         return view('cabinet_ministre.rapports.resultat', compact(
             'recommandations',

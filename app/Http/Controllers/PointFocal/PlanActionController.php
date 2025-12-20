@@ -19,7 +19,10 @@ class PlanActionController extends Controller
 
         // Filtres
         if ($request->filled('statut_validation')) {
-            $query->where('statut_validation', $request->statut_validation);
+            // maintenant on filtre par statut de la recommandation
+            $query->whereHas('recommandation', function($q) use ($request) {
+                $q->where('statut', $request->statut_validation);
+            });
         }
 
         if ($request->filled('statut_execution')) {
@@ -45,7 +48,7 @@ class PlanActionController extends Controller
             'termine' => 'Terminé'
         ];
 
-        return view('point_focal.plansaction.index', compact(
+        return view('point_focal.plans_action.index', compact(
             'plansAction',
             'statutsValidation',
             'statutsExecution'
@@ -62,7 +65,8 @@ class PlanActionController extends Controller
             abort(403, 'Action non autorisée.');
         }
 
-        if (!in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction'])) {
+        // Autoriser aussi la création si la recommandation a été rejetée par le responsable
+        if (!in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction', 'plan_rejete_responsable'])) {
             abort(403, 'Cette recommandation ne peut pas recevoir de plan d\'action.');
         }
 
@@ -89,15 +93,22 @@ class PlanActionController extends Controller
         ]);
         $planAction->recommandation_id = $recommandation->id;
         $planAction->point_focal_id = Auth::id();
-        $planAction->statut_validation = 'en_attente_responsable';
         $planAction->statut_execution = 'non_demarre';
         $planAction->pourcentage_avancement = 0;
 
         $planAction->save();
 
         // Mise à jour du statut de la recommandation
-        if ($recommandation->statut === 'point_focal_assigne') {
-            $recommandation->update(['statut' => 'plan_en_redaction']);
+        if (in_array($recommandation->statut, ['point_focal_assigne', 'plan_rejete_responsable'])) {
+            $recommandation->update([
+                'statut' => 'plan_en_redaction',
+                // Effacer le motif de rejet responsable si le PF crée une nouvelle action
+                'motif_rejet_responsable' => null,
+                'date_rejet_responsable' => null,
+            ]);
+
+            // Effacer les motifs IG au niveau des plans si présents
+            $recommandation->plansAction()->update(['motif_rejet_ig' => null]);
         }
 
         return redirect()->route('point_focal.recommandations.show', $recommandation)
@@ -114,8 +125,15 @@ class PlanActionController extends Controller
             abort(403, 'Action non autorisée.');
         }
 
-        // On ne peut modifier que les plans en attente ou rejetés
-        if (!in_array($planAction->statut_validation, ['en_attente_responsable', 'rejete_responsable', 'rejete_ig'])) {
+        // Ne pas permettre l'édition si la recommandation a déjà été soumise
+        if ($planAction->recommandation && $planAction->recommandation->statut === 'plan_soumis_responsable') {
+            return redirect()->route('point_focal.recommandations.show', $planAction->recommandation_id)
+                ->with('error', 'La planification a été soumise au responsable. Vous ne pouvez plus modifier ce plan tant que la décision n\'a pas été prise.');
+        }
+
+        // On ne peut modifier que si la recommandation est en rédaction ou rejetée
+        $allowedRecStatuts = ['point_focal_assigne', 'plan_en_redaction', 'plan_rejete_responsable'];
+        if (!in_array($planAction->recommandation->statut, $allowedRecStatuts)) {
             return redirect()->route('point_focal.recommandations.show', $planAction->recommandation_id)
                 ->with('error', 'Ce plan d\'action ne peut plus être modifié.');
         }
@@ -133,18 +151,41 @@ class PlanActionController extends Controller
             abort(403);
         }
 
+        // Ne pas permettre la mise à jour si la recommandation a été soumise
+        if ($planAction->recommandation && $planAction->recommandation->statut === 'plan_soumis_responsable') {
+            return redirect()->route('point_focal.recommandations.show', $planAction->recommandation_id)
+                ->with('error', 'La planification a été soumise au responsable. Vous ne pouvez plus modifier ce plan tant que la décision n\'a pas été prise.');
+        }
+
         $validated = $request->validate([
             'action' => 'required|string|max:1000',
         ]);
 
-        // Réinitialiser le statut de validation si le plan était rejeté
-        if (in_array($planAction->statut_validation, ['rejete_responsable', 'rejete_ig'])) {
-            $validated['statut_validation'] = 'en_attente_responsable';
-            $validated['motif_rejet_responsable'] = null;
-            $validated['motif_rejet_ig'] = null;
+        // Si le plan avait un motif de rejet précédent, on le nettoie et on efface le motif global de la recommandation
+        // Toujours appliquer la modification
+        $planAction->update(['action' => $validated['action']]);
+
+        // Quand le Point Focal modifie un plan (quel que soit le motif précédent),
+        // on considère qu'il corrige la recommandation :
+        // - repasser la recommandation en rédaction
+        // - effacer les motifs de rejet responsables
+        // - effacer les motifs IG sur les plans
+        $reco = $planAction->recommandation;
+        if ($reco) {
+            $reco->update([
+                'statut' => 'plan_en_redaction',
+                'motif_rejet_responsable' => null,
+                'date_rejet_responsable' => null,
+            ]);
+
+            // Clear motifs IG au niveau des plans
+            $reco->plansAction()->update(['motif_rejet_ig' => null]);
         }
 
-        $planAction->update(['action' => $validated['action']]);
+        // Clear motifs sur le plan courant aussi
+        $planAction->motif_rejet_responsable = null;
+        $planAction->motif_rejet_ig = null;
+        $planAction->save();
 
         return redirect()->route('point_focal.recommandations.show', $planAction->recommandation_id)
             ->with('success', 'Plan d\'action modifié avec succès.');
@@ -160,14 +201,33 @@ class PlanActionController extends Controller
             abort(403, 'Action non autorisée.');
         }
 
-        // On ne peut supprimer que les plans en attente ou rejetés
-        if (!in_array($planAction->statut_validation, ['en_attente_responsable', 'rejete_responsable', 'rejete_ig'])) {
+        // Ne pas permettre la suppression si la recommandation a été soumise
+        if ($planAction->recommandation && $planAction->recommandation->statut === 'plan_soumis_responsable') {
+            return redirect()->route('point_focal.recommandations.show', $planAction->recommandation_id)
+                ->with('error', 'La planification a été soumise au responsable. Vous ne pouvez plus supprimer ce plan tant que la décision n\'a pas été prise.');
+        }
+        // On ne peut supprimer que si la recommandation est en rédaction ou rejetée
+        $allowedRecStatuts = ['point_focal_assigne', 'plan_en_redaction', 'plan_rejete_responsable'];
+        if (!in_array($planAction->recommandation->statut, $allowedRecStatuts)) {
             return redirect()->route('point_focal.recommandations.show', $planAction->recommandation_id)
                 ->with('error', 'Ce plan d\'action ne peut pas être supprimé.');
         }
 
         $recommandation_id = $planAction->recommandation_id;
         $planAction->delete();
+
+        // Après suppression, considérer que le PF a modifié la planification :
+        // repasser la recommandation en rédaction et effacer les motifs de rejet.
+        $reco = \App\Models\Recommandation::find($recommandation_id);
+        if ($reco) {
+            $reco->update([
+                'statut' => 'plan_en_redaction',
+                'motif_rejet_responsable' => null,
+                'date_rejet_responsable' => null,
+            ]);
+
+            $reco->plansAction()->update(['motif_rejet_ig' => null]);
+        }
 
         return redirect()->route('point_focal.recommandations.show', $recommandation_id)
             ->with('success', 'Plan d\'action supprimé avec succès.');

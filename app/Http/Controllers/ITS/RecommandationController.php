@@ -121,7 +121,7 @@ class RecommandationController extends Controller
         $recommandation->load([
             'structure', // ✅ AJOUTER ICI
             'inspecteurGeneral:id,name',
-            'responsable:id,name,direction',
+            'responsable:id,name',
             'pointFocal:id,name,telephone',
             'plansAction'
         ]);

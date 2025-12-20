@@ -27,7 +27,7 @@
                 @method('PUT')
 
                 <!-- Contexte et informations existantes -->
-                <div class="p-4 mb-6 bg-blue-50 border border-blue-200 rounded-lg">
+                <div class="p-4 mb-6 border border-blue-200 rounded-lg bg-blue-50">
                     <h3 class="font-semibold text-blue-900">Information préalable</h3>
                     <p class="mt-1 text-sm text-blue-800">
                         L'ITS a défini une <strong>date limite</strong> de <strong>{{ $recommandation->date_limite->format('d/m/Y') }}</strong>
@@ -130,7 +130,7 @@
                     </div>
 
                     <!-- Vérification de cohérence -->
-                    <div class="p-3 mt-4 text-sm bg-amber-50 border border-amber-200 rounded-lg">
+                    <div class="p-3 mt-4 text-sm border rounded-lg bg-amber-50 border-amber-200">
                         <p class="text-amber-900">
                             <strong>Important :</strong> La date de fin prévue ne doit pas dépasser la date limite de <strong>{{ $recommandation->date_limite->format('d/m/Y') }}</strong>.
                         </p>
@@ -150,10 +150,26 @@
                     </button>
                 </div>
             </form>
+
+            <!-- Formulaire de soumission rapide (après sauvegarde) -->
+            @if($recommandation->peutEtreSoumiseParPointFocal())
+            <form method="POST" action="{{ route('point_focal.recommandations.soumettre_planification', $recommandation) }}" class="mt-4" onsubmit="return confirm('Soumettre la planification au responsable ? Cette action verrouillera l\'édition.');">
+                @csrf
+                <button type="submit" class="flex items-center px-6 py-3 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">
+                    <i class="mr-2 fas fa-paper-plane"></i>
+                    Soumettre la planification
+                </button>
+            </form>
+            @else
+            <button disabled class="mt-4 flex items-center px-6 py-3 text-white bg-indigo-300 rounded-lg cursor-not-allowed" title="Remplissez les informations de planification et créez au moins une action pour soumettre">
+                <i class="mr-2 fas fa-paper-plane"></i>
+                Soumettre la planification
+            </button>
+            @endif
         </div>
 
         <!-- Conseil -->
-        <div class="p-6 mt-6 bg-green-50 border border-green-200 rounded-lg">
+        <div class="p-6 mt-6 border border-green-200 rounded-lg bg-green-50">
             <h3 class="font-semibold text-green-900">Prochaine étape</h3>
             <p class="mt-2 text-sm text-green-800">
                 Une fois ces informations renseignées et sauvegardées, vous pourrez créer les <strong>actions ou mesures à prendre</strong>

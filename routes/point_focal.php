@@ -17,6 +17,7 @@ Route::prefix('point-focal')->middleware(['auth'])->name('point_focal.')->group(
     Route::get('/recommandations/{recommandation}', [RecommandationController::class, 'show'])->name('recommandations.show');
     Route::get('/recommandations/{recommandation}/edit', [RecommandationController::class, 'edit'])->name('recommandations.edit');
     Route::put('/recommandations/{recommandation}', [RecommandationController::class, 'update'])->name('recommandations.update');
+    Route::post('/recommandations/{recommandation}/soumettre-planification', [RecommandationController::class, 'soumettrePlanification'])->name('recommandations.soumettre_planification');
 
     // Plans d'action
     Route::get('/plans-action', [PlanActionController::class, 'index'])->name('plans_action.index');

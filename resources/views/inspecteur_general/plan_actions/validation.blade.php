@@ -9,7 +9,7 @@
             <div class="p-6 bg-white border-b border-gray-200">
                 <div class="text-center mb-8">
                     <h2 class="text-3xl font-bold text-gray-800">Validation du Plan d'Action</h2>
-                    <p class="text-gray-600 mt-2">Référence: {{ $planAction->reference }}</p>
+                    <p class="text-gray-600 mt-2">Référence: {{ $planAction->recommandation->reference }}</p>
                 </div>
 
                 <!-- Résumé du plan -->
@@ -17,13 +17,13 @@
                     <h3 class="text-xl font-semibold mb-4">Résumé du Plan d'Action</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <p><strong>Titre:</strong> {{ $planAction->titre }}</p>
-                            <p><strong>Point Focal:</strong> {{ $planAction->pointFocal->name ?? 'N/A' }}</p>
-                            <p><strong>Date création:</strong> {{ $planAction->created_at->format('d/m/Y') }}</p>
-                        </div>
+                                <p><strong>Titre:</strong> {{ $planAction->recommandation->titre }}</p>
+                                <p><strong>Point Focal:</strong> {{ $planAction->pointFocal->name ?? 'N/A' }}</p>
+                                <p><strong>Date création:</strong> {{ $planAction->created_at->format('d/m/Y') }}</p>
+                            </div>
                         <div>
                             <p><strong>Nombre d'activités:</strong> {{ $planAction->activites->count() }}</p>
-                            <p><strong>Avancement global:</strong> {{ $planAction->taux_avancement ?? 0 }}%</p>
+                            <p><strong>Avancement global:</strong> {{ $planAction->pourcentage_avancement ?? 0 }}%</p>
                             <p><strong>Statut actuel:</strong>
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
                                     En attente de validation
@@ -34,7 +34,7 @@
                 </div>
 
                 <!-- Formulaire de validation -->
-                <form method="POST" action="{{ route('inspecteur.plan_actions.validate', $planAction) }}" class="space-y-6">
+                <form method="POST" action="{{ route('inspecteur_general.plan_actions.validate', $planAction) }}" class="space-y-6">
                     @csrf
 
                     <!-- Avis de validation -->
@@ -80,7 +80,7 @@
 
                     <!-- Actions -->
                     <div class="flex justify-end gap-4 pt-6 border-t border-gray-200">
-                        <a href="{{ route('inspecteur.plan_actions.show', $planAction) }}"
+                        <a href="{{ route('inspecteur_general.plan_actions.show', $planAction) }}"
                            class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 transition duration-200">
                             Annuler
                         </a>

@@ -29,12 +29,11 @@ class DashboardController extends Controller
         // Recommandations assignées à la structure
         $recommandationsAssignees = Recommandation::where('structure_id', $structureId)->count();
 
-        // Plans en attente de validation responsable
+        // Plans en attente de validation responsable (dérivé du statut de la recommandation)
         $plansEnAttenteCount = PlanAction::whereHas('recommandation', function($query) use ($structureId) {
-            $query->where('structure_id', $structureId);
-        })
-        ->where('statut_validation', 'en_attente_responsable')
-        ->count();
+            $query->where('structure_id', $structureId)
+                  ->where('statut', 'plan_soumis_responsable');
+        })->count();
 
         // Recommandations en retard
         $recommandationsRetard = Recommandation::where('structure_id', $structureId)
@@ -48,10 +47,9 @@ class DashboardController extends Controller
         })->count();
 
         $plansValides = PlanAction::whereHas('recommandation', function($query) use ($structureId) {
-            $query->where('structure_id', $structureId);
-        })
-        ->whereIn('statut_validation', ['valide_responsable', 'valide_ig'])
-        ->count();
+            $query->where('structure_id', $structureId)
+                  ->whereIn('statut', ['plan_valide_responsable', 'plan_valide_ig']);
+        })->count();
 
         $tauxValidation = $totalPlansSoumis > 0 ? round(($plansValides / $totalPlansSoumis) * 100, 1) : 0;
 
@@ -66,9 +64,9 @@ class DashboardController extends Controller
     private function getPlansEnAttente($structureId)
     {
         return PlanAction::whereHas('recommandation', function($query) use ($structureId) {
-            $query->where('structure_id', $structureId);
+            $query->where('structure_id', $structureId)
+                  ->where('statut', 'plan_soumis_responsable');
         })
-        ->where('statut_validation', 'en_attente_responsable')
         ->with([
             'recommandation:id,titre',
             'pointFocal:id,name'

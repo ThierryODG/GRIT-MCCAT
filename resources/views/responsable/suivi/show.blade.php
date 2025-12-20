@@ -38,13 +38,19 @@
             <div class="p-6 bg-white border border-gray-200 rounded-xl">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-semibold text-gray-900">Plan d'Action</h2>
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                        @if($recommandation->planAction->statut_validation === 'valide_ig') bg-green-100 text-green-800
-                        @elseif($recommandation->planAction->statut_validation === 'valide_responsable') bg-blue-100 text-blue-800
-                        @elseif($recommandation->planAction->statut_validation === 'en_attente_responsable') bg-yellow-100 text-yellow-800
-                        @elseif($recommandation->planAction->statut_validation === 'rejete_responsable') bg-red-100 text-red-800
-                        @else bg-gray-100 text-gray-800 @endif">
-                        {{ $recommandation->planAction->statut_validation_label }}
+                    @php
+                        $recStatut = $recommandation->statut;
+                        $class = 'bg-gray-100 text-gray-800';
+                        if (in_array($recStatut, ['plan_valide_ig', 'plan_valide_responsable'])) {
+                            $class = 'bg-green-100 text-green-800';
+                        } elseif (in_array($recStatut, ['plan_soumis_responsable'])) {
+                            $class = 'bg-yellow-100 text-yellow-800';
+                        } elseif (in_array($recStatut, ['plan_rejete_responsable', 'plan_rejete_ig'])) {
+                            $class = 'bg-red-100 text-red-800';
+                        }
+                    @endphp
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $class }}">
+                        {{ $recommandation->planAction->statut_validation_label ?? $recommandation->statut_label }}
                     </span>
                 </div>
 
@@ -195,18 +201,18 @@
                     </a>
                     @endif
 
-                    @if($recommandation->planAction && $recommandation->planAction->statut_validation === 'en_attente_responsable')
+                    @if($recommandation->statut === 'plan_soumis_responsable')
                     <a href="{{ route('responsable.validation_plans.show', $recommandation->planAction) }}"
                        class="block w-full px-4 py-2 text-sm text-center text-white transition-colors bg-orange-600 rounded-lg hover:bg-orange-700">
-                        Valider le Plan
+                        Valider la recommandation
                     </a>
                     @endif
 
-                    @if($recommandation->planAction && $recommandation->planAction->statut_validation === 'valide_responsable')
+                    @if($recommandation->statut === 'plan_valide_responsable')
                     <form action="{{ route('responsable.validation_plans.transmettre', $recommandation->planAction) }}" method="POST">
                         @csrf
                         <button type="submit"
-                                onclick="return confirm('Transmettre ce plan à l\\'Inspecteur Général ?')"
+                                onclick="return confirm('Transmettre cette recommandation à l\'Inspecteur Général ?')"
                                 class="w-full px-4 py-2 text-sm text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700">
                             Transmettre à l'IG
                         </button>

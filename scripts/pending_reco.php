@@ -10,11 +10,11 @@ $kernel->bootstrap();
 use Illuminate\Support\Facades\DB;
 
 $userId = 5; // changez si nécessaire
-$statuses = ['en_attente_responsable', 'rejete_responsable', 'rejete_ig'];
 
+// Maintenant la logique s'appuie sur le statut de la recommandation
 $rows = DB::select(
-    'SELECT r.id as recommandation_id, r.reference, r.statut as recommandation_statut, pa.id as plan_id, pa.statut_validation, pa.responsable_id, r.point_focal_id FROM recommandations r JOIN plan_actions pa ON pa.recommandation_id = r.id WHERE pa.responsable_id = ? AND pa.statut_validation IN (?,?,?)',
-    [$userId, $statuses[0], $statuses[1], $statuses[2]]
+    'SELECT r.id as recommandation_id, r.reference, r.statut as recommandation_statut, pa.id as plan_id, pa.responsable_id, r.point_focal_id FROM recommandations r JOIN plan_actions pa ON pa.recommandation_id = r.id WHERE pa.responsable_id = ? AND r.statut IN (?,?,?)',
+    [$userId, 'plan_soumis_responsable', 'plan_rejete_responsable', 'plan_rejete_ig']
 );
 
 echo json_encode($rows, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);

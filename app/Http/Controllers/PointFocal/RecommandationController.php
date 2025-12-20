@@ -38,6 +38,12 @@ class RecommandationController extends Controller
 
         $recommandation->load(['structure', 'its', 'plansAction']);
 
+         return view('point_focal.recommandations.show', [
+        'recommandation' => $recommandation,
+        'peutSoumettre' => $recommandation->peutEtreSoumiseParPointFocal(), // Méthode que tu as ajoutée au modèle
+        'aEteRejetee' => $recommandation->aEteRejeteeParResponsable(),     // Méthode que tu as ajoutée au modèle
+    ]);
+
         return view('point_focal.recommandations.show', compact('recommandation'));
     }
 
@@ -72,8 +78,8 @@ class RecommandationController extends Controller
             abort(403, 'Accès non autorisé à cette recommandation.');
         }
 
-        // Vérifier que la recommandation est dans un statut éditable
-        if (!in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction'])) {
+        // Vérifier que la recommandation est dans un statut éditable (inclure le cas 'rejeté' pour permettre corrections)
+        if (!in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction', 'plan_rejete_responsable'])) {
             return redirect()->route('point_focal.recommandations.show', $recommandation)
                 ->with('error', 'Cette recommandation ne peut plus être modifiée.');
         }
@@ -91,8 +97,8 @@ class RecommandationController extends Controller
             abort(403, 'Accès non autorisé.');
         }
 
-        // Vérifier le statut
-        if (!in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction'])) {
+        // Vérifier le statut (autoriser aussi le cas où le responsable a rejeté)
+        if (!in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction', 'plan_rejete_responsable'])) {
             return redirect()->route('point_focal.recommandations.show', $recommandation)
                 ->with('error', 'Cette recommandation ne peut plus être modifiée.');
         }
@@ -115,10 +121,38 @@ class RecommandationController extends Controller
                 ->withInput();
         }
 
+        // Detecter s'il y a réellement des changements par rapport aux valeurs en base
+        $original = $recommandation->only(['indicateurs', 'incidence_financiere', 'delai_mois', 'date_debut_prevue', 'date_fin_prevue']);
+
+        // Normaliser les dates pour comparaison (Y-m-d)
+        $origDates = [
+            'date_debut_prevue' => $original['date_debut_prevue'] ? optional($original['date_debut_prevue'])->format('Y-m-d') : null,
+            'date_fin_prevue' => $original['date_fin_prevue'] ? optional($original['date_fin_prevue'])->format('Y-m-d') : null,
+        ];
+
+        $changed = false;
+        foreach (['indicateurs', 'incidence_financiere', 'delai_mois'] as $key) {
+            if (($original[$key] ?? null) != ($validated[$key] ?? null)) {
+                $changed = true;
+                break;
+            }
+        }
+
+        if (! $changed) {
+            if (($origDates['date_debut_prevue'] ?? null) != ($validated['date_debut_prevue'] ?? null) ||
+                ($origDates['date_fin_prevue'] ?? null) != ($validated['date_fin_prevue'] ?? null)) {
+                $changed = true;
+            }
+        }
+
+        if (! $changed) {
+            return back()->with('warning', 'Aucune modification détectée — rien n\'a été sauvegardé.');
+        }
+
+        // Appliquer les changements
         $recommandation->update($validated);
 
         // Effacer les motifs de rejet quand le Point Focal modifie (ils ont corrigé)
-        // Clear au niveau recommandation (rejet Responsable)
         $recommandation->update([
             'motif_rejet_responsable' => null,
             'date_rejet_responsable' => null
@@ -128,12 +162,78 @@ class RecommandationController extends Controller
             'motif_rejet_ig' => null
         ]);
 
-        // Mettre à jour le statut si c'était 'point_focal_assigne'
-        if ($recommandation->statut === 'point_focal_assigne') {
+        // Si la recommandation était en état 'rejeté par responsable', repasser en rédaction
+        if (in_array($recommandation->statut, ['point_focal_assigne', 'plan_rejete_responsable'])) {
             $recommandation->update(['statut' => 'plan_en_redaction']);
         }
 
         return redirect()->route('point_focal.recommandations.show', $recommandation)
             ->with('success', 'Informations de planification mises à jour. Les motifs de rejet antérieurs ont été effacés. Vous pouvez maintenant créer les actions.');
+    }
+
+    /**
+     * Soumettre la planification au responsable (Point Focal)
+     */
+    public function soumettrePlanification(Recommandation $recommandation)
+    {
+        // Vérifier que l'utilisateur est bien le point focal assigné
+        if ($recommandation->point_focal_id !== Auth::id()) {
+            abort(403, 'Accès non autorisé.');
+        }
+
+        // Vérifier que la recommandation est dans un statut éditable
+        if (!in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction', 'plan_rejete_responsable'])) {
+            return redirect()->route('point_focal.recommandations.show', $recommandation)
+                ->with('error', 'Cette recommandation ne peut pas être soumise dans son état actuel.');
+        }
+
+        // Vérifier que les informations de planification sont complètes
+        if (empty($recommandation->indicateurs)
+            || empty($recommandation->incidence_financiere)
+            || empty($recommandation->delai_mois)
+            || empty($recommandation->date_debut_prevue)
+            || empty($recommandation->date_fin_prevue)) {
+
+            return back()->with('error', 'Complétez les informations de planification avant de soumettre.');
+        }
+
+        // Vérifier qu'il y a au moins une action renseignée
+        if (!$recommandation->plansAction()->whereNotNull('action')->exists()) {
+            return back()->with('error', 'Ajoutez au moins une action avant de soumettre la planification.');
+        }
+
+        // Changer le statut pour indiquer la soumission au responsable
+        $recommandation->update([
+            'statut' => 'plan_soumis_responsable',
+            // Effacer l'ancien motif de rejet Responsable si présent (le PF a corrigé)
+            'motif_rejet_responsable' => null,
+            'date_rejet_responsable' => null,
+        ]);
+
+        // Effacer l'ancien motif de rejet IG (si présent) car le PF a corrigé
+        $recommandation->update([
+            'motif_rejet_ig' => null,
+        ]);
+
+        // Notifier le responsable (Notifications Laravel)
+        try {
+            if ($recommandation->responsable) {
+                $recommandation->responsable->notify(new \App\Notifications\PlanningSubmitted($recommandation));
+            } else {
+                // si pas de responsable précis, notifier les responsables de la structure
+                $responsables = \App\Models\User::where('structure_id', $recommandation->structure_id)
+                    ->where('role', 'responsable')
+                    ->get();
+                foreach ($responsables as $resp) {
+                    $resp->notify(new \App\Notifications\PlanningSubmitted($recommandation));
+                }
+            }
+        } catch (\Throwable $e) {
+            // Ne pas bloquer le flux si la notification échoue; enregistrer un log léger
+            logger()->warning('Notification PlanningSubmitted failed: ' . $e->getMessage());
+        }
+
+        return redirect()->route('point_focal.recommandations.show', $recommandation)
+            ->with('success', 'Planification soumise au responsable.');
     }
 }

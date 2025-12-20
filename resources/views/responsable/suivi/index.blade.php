@@ -206,10 +206,10 @@
                             <a href="{{ route('responsable.suivi.show', $recommandation) }}"
                                class="mr-3 text-blue-600 hover:text-blue-900">Détails</a>
 
-                            @if($recommandation->planAction && $recommandation->planAction->statut_validation === 'en_attente_responsable')
-                            <a href="{{ route('responsable.validation_plans.show', $recommandation->planAction) }}"
-                               class="text-orange-600 hover:text-orange-900">Valider</a>
-                            @endif
+                                     @if($recommandation->statut === 'plan_soumis_responsable')
+                                     <a href="{{ route('responsable.validation_plans.show', $recommandation->planAction) }}"
+                                         class="text-orange-600 hover:text-orange-900">Valider</a>
+                                     @endif
                         </td>
                     </tr>
                     @empty

@@ -57,7 +57,7 @@ class DashboardController extends Controller
 
         // ==================== TOP 5 STRUCTURES PERFORMANTES ====================
         $topStructures = Recommandation::select('its_id', DB::raw('count(*) as total'))
-            ->with('its:id,name,direction')
+            ->with('its:id,name')
             ->where('statut', 'cloturee')
             ->groupBy('its_id')
             ->orderByDesc('total')

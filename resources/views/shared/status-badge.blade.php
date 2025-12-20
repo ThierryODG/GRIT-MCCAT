@@ -40,6 +40,11 @@ $statusConfig = [
         'icon' => 'fas fa-file-upload',
         'label' => 'Plan soumis au Responsable'
     ],
+    'plan_rejete_responsable' => [
+        'class' => 'bg-yellow-100 text-yellow-900',
+        'icon' => 'fas fa-exclamation-triangle',
+        'label' => 'Plan rejeté par le Responsable'
+    ],
     'plan_valide_responsable' => [
         'class' => 'bg-teal-100 text-teal-800',
         'icon' => 'fas fa-check',

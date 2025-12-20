@@ -193,7 +193,12 @@ namespace App\Models{
  * @property int|null $delai_mois
  * @property \Illuminate\Support\Carbon|null $date_debut_prevue
  * @property \Illuminate\Support\Carbon|null $date_fin_prevue
+ * @property string|null $motif_rejet_responsable
+ * @property \Illuminate\Support\Carbon|null $date_rejet_responsable
+ * @property-read mixed $date_rejet_responsable_formatee
+ * @property-read mixed $date_validation_responsable_formatee
  * @property-read mixed $priorite_color
+ * @property-read mixed $statut_color
  * @property-read mixed $statut_label
  * @property-read \App\Models\User|null $inspecteurGeneral
  * @property-read \App\Models\User $its
@@ -219,6 +224,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDateDebutPrevue($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDateFinPrevue($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDateLimite($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDateRejetResponsable($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDateValidationIg($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDelaiMois($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereDescription($value)
@@ -230,6 +236,7 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereItsId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereMotifRejetCloture($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereMotifRejetIg($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereMotifRejetResponsable($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation wherePointFocalId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation wherePriorite($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Recommandation whereReference($value)

@@ -7,31 +7,37 @@ $kernel->bootstrap();
 use Illuminate\Support\Facades\Auth;
 
 $userId = 5;
-$pendingPlanStatuses = ['en_attente_responsable', 'rejete_responsable', 'rejete_ig'];
+$pendingRecStatuts = ['plan_soumis_responsable', 'plan_rejete_responsable', 'plan_rejete_ig'];
 
-$pointFocaux = \App\Models\User::whereHas('recommandationsAssignees', function ($q) use ($userId, $pendingPlanStatuses) {
-    $q->whereHas('plansAction', function ($qa) use ($userId, $pendingPlanStatuses) {
+$pointFocaux = \App\Models\User::whereHas('recommandationsAssignees', function ($q) use ($userId, $pendingRecStatuts) {
+    $q->whereHas('plansAction', function ($qa) use ($userId, $pendingRecStatuts) {
         $qa->where(function ($q2) use ($userId) {
                 $q2->whereNull('responsable_id')
                    ->orWhere('responsable_id', $userId);
             })
-           ->whereIn('statut_validation', $pendingPlanStatuses);
+           ->whereHas('recommandation', function ($qr) use ($pendingRecStatuts) {
+               $qr->whereIn('statut', $pendingRecStatuts);
+           });
     });
 })
-->with(['recommandationsAssignees' => function ($q) use ($userId, $pendingPlanStatuses) {
-    $q->whereHas('plansAction', function ($qa) use ($userId, $pendingPlanStatuses) {
+->with(['recommandationsAssignees' => function ($q) use ($userId, $pendingRecStatuts) {
+    $q->whereHas('plansAction', function ($qa) use ($userId, $pendingRecStatuts) {
           $qa->where(function ($q2) use ($userId) {
                   $q2->whereNull('responsable_id')
                      ->orWhere('responsable_id', $userId);
               })
-             ->whereIn('statut_validation', $pendingPlanStatuses);
+             ->whereHas('recommandation', function ($qr) use ($pendingRecStatuts) {
+                 $qr->whereIn('statut', $pendingRecStatuts);
+             });
       })
-      ->with(['structure','plansAction' => function ($qa) use ($userId, $pendingPlanStatuses) {
+      ->with(['structure','plansAction' => function ($qa) use ($userId, $pendingRecStatuts) {
           $qa->where(function ($q2) use ($userId) {
                   $q2->whereNull('responsable_id')
                      ->orWhere('responsable_id', $userId);
               })
-             ->whereIn('statut_validation', $pendingPlanStatuses);
+             ->whereHas('recommandation', function ($qr) use ($pendingRecStatuts) {
+                 $qr->whereIn('statut', $pendingRecStatuts);
+             });
       }])
       ->orderBy('reference', 'asc');
 }])->orderBy('name','asc')->get();
@@ -42,7 +48,7 @@ foreach ($pointFocaux as $pf) {
     foreach ($pf->recommandationsAssignees as $r) {
         $plans = [];
         foreach ($r->plansAction as $p) {
-            $plans[] = ['plan_id'=>$p->id, 'statut_validation'=>$p->statut_validation, 'responsable_id'=>$p->responsable_id];
+            $plans[] = ['plan_id'=>$p->id, 'recommandation_statut'=>optional($p->recommandation)->statut, 'responsable_id'=>$p->responsable_id];
         }
         $rf[] = ['recommandation_id'=>$r->id,'reference'=>$r->reference,'plans'=>$plans];
     }

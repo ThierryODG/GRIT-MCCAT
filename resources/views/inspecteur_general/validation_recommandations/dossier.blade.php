@@ -208,7 +208,7 @@
 </div>
 
 <!-- Modale de confirmation -->
-<div id="confirmModal" class="fixed inset-0 z-50 items-center justify-center transition-opacity bg-black bg-opacity-50 opacity-0 pointer-events-none" style="display: none;">
+<div id="confirmModal" class="fixed inset-0 z-50 flex items-center justify-center transition-opacity bg-black bg-opacity-50 opacity-0" style="display: none;">
     <div class="max-w-md mx-4 bg-white rounded-lg shadow-xl">
         <div class="p-6 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900">
@@ -239,6 +239,10 @@ function openConfirmModal(type) {
     const messageDiv = document.getElementById('modalMessage');
     const confirmBtn = document.getElementById('confirmBtn');
 
+    // remove previous error if any
+    const prevErr = document.getElementById('modalError');
+    if (prevErr) prevErr.remove();
+
     if (type === 'valider') {
         messageDiv.innerHTML = `<p class="mb-4 text-gray-700">Êtes-vous sûr de vouloir <strong>valider et démarrer l'exécution</strong> de cette recommandation ?</p><p class="p-3 text-sm text-gray-600 rounded bg-green-50"><strong>✓ Important :</strong> Une fois validée, l'exécution et le suivi commenceront immédiatement.</p>`;
         confirmBtn.className = 'px-4 py-2 text-white bg-green-600 rounded-lg hover:bg-green-700 transition';
@@ -260,6 +264,22 @@ function closeConfirmModal() {
 }
 
 function submitForm() {
+    // If rejecting, ensure the motif is provided client-side before submitting
+    if (actionType === 'rejeter') {
+        const motifEl = document.getElementById('motif');
+        if (!motifEl || motifEl.value.trim() === '') {
+            const messageDiv = document.getElementById('modalMessage');
+            if (!document.getElementById('modalError')) {
+                const errDiv = document.createElement('div');
+                errDiv.id = 'modalError';
+                errDiv.className = 'mb-4 p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded';
+                errDiv.innerText = 'Le motif de rejet est obligatoire.';
+                messageDiv.prepend(errDiv);
+            }
+            return; // don't close modal or submit
+        }
+    }
+
     closeConfirmModal();
     if (actionType === 'valider') {
         document.querySelector('form[action*="valider"]').submit();

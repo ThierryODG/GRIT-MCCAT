@@ -4,6 +4,7 @@ namespace App\Http\Controllers\PointFocal;
 
 use App\Http\Controllers\Controller;
 use App\Models\PlanAction;
+use App\Models\Recommandation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -14,16 +15,25 @@ class AvancementController extends Controller
      */
     public function index()
     {
-        $plansActions = PlanAction::where('point_focal_id', Auth::id())
-            ->where('statut_validation', 'valide_ig') // Validés par l'IG
-            ->with(['recommandation' => function ($q) {
-                $q->select('id', 'its_id');
-                $q->with('its:id,name');
-                $q->orderBy('date_debut_prevue', 'asc');
-            }])
+        $baseQuery = PlanAction::where('point_focal_id', Auth::id())
+            ->whereHas('recommandation', function ($q) {
+                $q->where('statut', Recommandation::STATUT_PLAN_VALIDE_IG);
+            });
+
+        // Counters for dashboard
+        $totalCount = (clone $baseQuery)->count();
+        $notStarted = (clone $baseQuery)->where(function($q){
+            $q->whereNull('statut_execution')->orWhere('statut_execution', 'non_demarre');
+        })->count();
+        $inProgress = (clone $baseQuery)->where('statut_execution', 'en_cours')->count();
+        $done = (clone $baseQuery)->where('statut_execution', 'termine')->count();
+
+        $plansActions = $baseQuery
+            ->with(['recommandation' => function($q){ $q->select('id','reference','titre'); }])
+            ->orderBy('created_at', 'asc')
             ->paginate(15);
 
-        return view('point_focal.avancement.index', compact('plansActions'));
+        return view('point_focal.avancement.index', compact('plansActions', 'totalCount', 'notStarted', 'inProgress', 'done'));
     }
 
     /**
@@ -36,7 +46,7 @@ class AvancementController extends Controller
             abort(403, 'Ce plan ne vous est pas assigné.');
         }
 
-        if ($planAction->statut_validation !== 'valide_ig') {
+        if (! $planAction->recommandation || $planAction->recommandation->statut !== Recommandation::STATUT_PLAN_VALIDE_IG) {
             return redirect()->route('point_focal.avancement.index')
                 ->with('error', 'Ce plan n\'est pas encore validé.');
         }
@@ -72,10 +82,20 @@ class AvancementController extends Controller
             $planAction->update(['statut_execution' => 'non_demarre']);
         } elseif ($validated['pourcentage_avancement'] < 100) {
             $planAction->update(['statut_execution' => 'en_cours']);
-            $planAction->recommandation->update(['statut' => 'en_execution']);
+            $planAction->recommandation->update(['statut' => Recommandation::STATUT_EN_EXECUTION]);
         } else {
             $planAction->update(['statut_execution' => 'termine']);
-            $planAction->recommandation->update(['statut' => 'execution_terminee']);
+            $planAction->recommandation->update(['statut' => Recommandation::STATUT_EXECUTION_TERMINEE]);
+        }
+
+        // If AJAX/JSON request, return JSON response for immediate UI update
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Avancement mis à jour avec succès.',
+                'pourcentage' => $planAction->pourcentage_avancement,
+                'statut_execution' => $planAction->statut_execution,
+            ]);
         }
 
         return redirect()->route('point_focal.avancement.index')

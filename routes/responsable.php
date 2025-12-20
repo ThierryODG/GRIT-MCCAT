@@ -23,8 +23,9 @@ Route::prefix('responsable')->middleware(['auth'])->name('responsable.')->group(
     Route::get('/validation-plans/{planAction}', [ValidationPlanController::class, 'show'])->name('validation_plans.show');
     Route::post('/validation-plans/{recommandation}/valider', [ValidationPlanController::class, 'validerRecommandation'])->name('validation_plans.valider_recommandation');
     Route::post('/validation-plans/{recommandation}/rejeter', [ValidationPlanController::class, 'rejeterRecommandation'])->name('validation_plans.rejeter_recommandation');
-    Route::post('/validation-plans/{recommandation}/transmettre', [ValidationPlanController::class, 'transmettreIG'])->name('validation_plans.transmettre_ig');
-
+    // Transmettre corrections au Point Focal (suite à un rejet IG)
+    Route::post('/validation-plans/{recommandation}/transmettre-pf', [ValidationPlanController::class, 'transmettreAuPointFocal'])->name('validation_plans.transmettre_pf');
+    
     // Suivi des recommandations
     Route::get('/suivi', [SuiviController::class, 'index'])->name('suivi.index');
     Route::get('/suivi/{recommandation}', [SuiviController::class, 'show'])->name('suivi.show');

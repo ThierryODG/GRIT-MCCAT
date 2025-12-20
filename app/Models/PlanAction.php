@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\Recommandation;
 
 class PlanAction extends Model
 {
@@ -13,8 +14,7 @@ class PlanAction extends Model
         // Contenu du plan
         'action',
 
-        // Workflow validation
-        'statut_validation',
+        // Workflow validation (moved to recommendation level)
         'validateur_responsable_id',
         'date_validation_responsable',
         'commentaire_validation_responsable',
@@ -73,18 +73,20 @@ class PlanAction extends Model
 
     public function scopeEnAttenteValidationResponsable($query)
     {
-        return $query->where('statut_validation', 'en_attente_responsable')
-            ->whereNotNull('action');
+        // deprecated: validation is now at recommendation level
+        return $query->whereNotNull('action');
     }
 
     public function scopeEnAttenteValidationIG($query)
     {
-        return $query->where('statut_validation', 'en_attente_ig');
+        // deprecated: validation is now at recommendation level
+        return $query;
     }
 
     public function scopeValides($query)
     {
-        return $query->where('statut_validation', 'valide_ig');
+        // deprecated: validation is now at recommendation level
+        return $query;
     }
 
     public function scopeEnExecution($query)
@@ -96,16 +98,27 @@ class PlanAction extends Model
 
     public function getStatutValidationLabelAttribute()
     {
-        $labels = [
-            'en_attente_responsable' => 'En attente Responsable',
-            'valide_responsable' => 'Validé par le Responsable',
-            'rejete_responsable' => 'Rejeté par le Responsable',
-            'en_attente_ig' => 'En attente IG',
-            'valide_ig' => 'Validé par l\'IG',
-            'rejete_ig' => 'Rejeté par l\'IG',
+        // Derive a validation label from the parent recommendation (validation is at recommendation level)
+        if (!empty($this->motif_rejet_ig)) {
+            return 'Rejeté par l\'IG';
+        }
+
+        if ($this->recommandation && !empty($this->recommandation->motif_rejet_responsable)) {
+            return 'Rejeté par le Responsable';
+        }
+
+        $statut = $this->recommandation->statut ?? null;
+        $map = [
+            'plan_en_redaction' => 'Plan en rédaction',
+            'plan_soumis_responsable' => 'En attente Responsable',
+            'plan_valide_responsable' => 'Validé par le Responsable',
+            'plan_soumis_ig' => 'En attente IG',
+            'plan_valide_ig' => 'Validé par l\'IG',
+            'plan_rejete_ig' => 'Plan rejeté par l\'IG',
+            'plan_rejete_responsable' => 'Plan rejeté par le Responsable',
         ];
 
-        return $labels[$this->statut_validation] ?? $this->statut_validation;
+        return $map[$statut] ?? 'Statut inconnu';
     }
 
     public function getStatutExecutionLabelAttribute()
@@ -128,27 +141,34 @@ class PlanAction extends Model
 
     public function peutEtreValideParResponsable(): bool
     {
-        return $this->statut_validation === 'en_attente_responsable'
+        return $this->recommandation
+            && $this->recommandation->statut === Recommandation::STATUT_PLAN_SOUMIS_RESPONSABLE
             && $this->estRempli();
     }
 
     public function peutEtreValideParIG(): bool
     {
-        return $this->statut_validation === 'en_attente_ig';
+        return $this->recommandation
+            && $this->recommandation->statut === Recommandation::STATUT_PLAN_SOUMIS_IG;
     }
 
     public function peutEtreModifie(): bool
     {
-        return in_array($this->statut_validation, [
-            'en_attente_responsable',
-            'rejete_responsable',
-            'rejete_ig'
+        if (!$this->recommandation) {
+            return false;
+        }
+
+        return in_array($this->recommandation->statut, [
+            Recommandation::STATUT_PLAN_SOUMIS_RESPONSABLE,
+            Recommandation::STATUT_PLAN_REJETE_RESPONSABLE,
+            Recommandation::STATUT_PLAN_REJETE_IG,
         ]);
     }
 
     public function estValide(): bool
     {
-        return $this->statut_validation === 'valide_ig';
+        return $this->recommandation
+            && $this->recommandation->statut === Recommandation::STATUT_PLAN_VALIDE_IG;
     }
 
     public function estEnRetard(): bool

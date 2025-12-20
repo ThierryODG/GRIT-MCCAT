@@ -7,11 +7,9 @@ $kernel->bootstrap();
 
 use Illuminate\Support\Facades\DB;
 
-$statuses = ['en_attente_responsable', 'rejete_responsable', 'rejete_ig'];
-
 $rows = DB::select(
-    'SELECT pa.id as plan_id, pa.recommandation_id, pa.responsable_id, pa.statut_validation, r.reference, r.statut as recommandation_statut, r.point_focal_id FROM plan_actions pa LEFT JOIN recommandations r ON r.id = pa.recommandation_id WHERE pa.statut_validation IN (?,?,?) ORDER BY pa.id DESC',
-    [$statuses[0], $statuses[1], $statuses[2]]
+    'SELECT pa.id as plan_id, pa.recommandation_id, pa.responsable_id, r.reference, r.statut as recommandation_statut, r.point_focal_id FROM plan_actions pa LEFT JOIN recommandations r ON r.id = pa.recommandation_id WHERE r.statut IN (?,?,?) ORDER BY pa.id DESC',
+    ['plan_soumis_responsable', 'plan_rejete_responsable', 'plan_rejete_ig']
 );
 
 echo json_encode($rows, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);

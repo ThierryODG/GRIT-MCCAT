@@ -42,7 +42,7 @@ class SuiviController extends Controller
         $pointsFocaux = \App\Models\User::whereHas('role', function($q) {
                 $q->where('nom', 'point_focal');
             })
-            ->where('direction', Auth::user()->direction)
+            ->where('structure_id', Auth::user()->structure_id)
             ->get();
 
         return view('responsable.suivi.index', compact('recommandations', 'pointsFocaux'));
@@ -58,7 +58,7 @@ class SuiviController extends Controller
         }
 
         $recommandation->load([
-            'its:id,name,direction',
+            'its:id,name',
             'inspecteurGeneral:id,name',
             'pointFocal:id,name,telephone',
             'planAction'

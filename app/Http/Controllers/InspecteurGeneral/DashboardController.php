@@ -25,13 +25,18 @@ class DashboardController extends Controller
 
         // ==================== PHASE 3 : Validation Plans d'Action ====================
         $statsPlansAction = [
-            'en_attente_validation' => PlanAction::where('statut_validation', 'en_attente_ig')->count(),
-            'valides' => PlanAction::where('statut_validation', 'valide_ig')
-                ->where('validateur_ig_id', Auth::id())
-                ->count(),
-            'rejetes' => PlanAction::where('statut_validation', 'rejete')
-                ->where('validateur_ig_id', Auth::id())
-                ->count(),
+            // Plans dont la recommandation est soumise à l'IG
+            'en_attente_validation' => PlanAction::whereHas('recommandation', function($q) {
+                $q->where('statut', 'plan_soumis_ig');
+            })->count(),
+            'valides' => PlanAction::where('validateur_ig_id', Auth::id())
+                ->whereHas('recommandation', function($q) {
+                    $q->where('statut', 'plan_valide_ig');
+                })->count(),
+            'rejetes' => PlanAction::where('validateur_ig_id', Auth::id())
+                ->whereHas('recommandation', function($q) {
+                    $q->where('statut', 'plan_rejete_ig');
+                })->count(),
         ];
 
         // ==================== ACTIVITÉS RÉCENTES ====================
@@ -47,7 +52,9 @@ class DashboardController extends Controller
         // Plans d'action récemment traités
         $plansActionsRecents = PlanAction::where('validateur_ig_id', Auth::id())
             ->with(['recommandation.its:id,name,email', 'recommandation.structure:id,nom']) // CORRIGÉ : structure au lieu de direction
-            ->whereIn('statut_validation', ['valide_ig', 'rejete'])
+            ->whereHas('recommandation', function($q) {
+                $q->whereIn('statut', ['plan_valide_ig', 'plan_rejete_ig']);
+            })
             ->latest('date_validation_ig')
             ->take(5)
             ->get();

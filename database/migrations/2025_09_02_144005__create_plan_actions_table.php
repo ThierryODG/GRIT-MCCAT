@@ -23,16 +23,6 @@ return new class extends Migration
             $table->date('date_debut_prevue')->nullable();
             $table->date('date_fin_prevue')->nullable();
 
-            // ==================== WORKFLOW DE VALIDATION ====================
-            $table->enum('statut_validation', [
-                'en_attente_responsable',
-                'valide_responsable',
-                'rejete_responsable',
-                'en_attente_ig',
-                'valide_ig',
-                'rejete_ig'
-            ])->default('en_attente_responsable');
-
             // ==================== STATUT D'EXÉCUTION ====================
             $table->enum('statut_execution', [
                 'non_demarre',

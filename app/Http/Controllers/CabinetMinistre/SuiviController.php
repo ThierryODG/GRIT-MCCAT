@@ -13,7 +13,7 @@ class SuiviController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Recommandation::with(['its:id,name,direction', 'inspecteurGeneral:id,name', 'pointFocal:id,name']);
+        $query = Recommandation::with(['its:id,name', 'inspecteurGeneral:id,name', 'pointFocal:id,name']);
 
         // ==================== FILTRES ====================
 
@@ -60,7 +60,7 @@ class SuiviController extends Controller
     public function show(Recommandation $recommandation)
     {
         $recommandation->load([
-            'its:id,name,direction,telephone',
+            'its:id,name,telephone',
             'inspecteurGeneral:id,name',
             'pointFocal:id,name,telephone',
             'planAction.avancement' // Si vous avez un modèle Avancement

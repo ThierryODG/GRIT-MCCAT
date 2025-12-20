@@ -19,7 +19,7 @@ class ValidationRecommandationController extends Controller
         $structures = Structure::whereHas('recommandations', function ($q) {
             $q->where('statut', 'plan_soumis_ig')
               ->whereHas('plansAction', function ($qa) {
-                  $qa->where('statut_validation', 'en_attente_ig');
+                  $qa->whereNotNull('action');
               });
         })
         ->with([
@@ -30,7 +30,7 @@ class ValidationRecommandationController extends Controller
                       'pointFocal',
                       'responsable',
                       'plansAction' => function ($qa) {
-                          $qa->where('statut_validation', 'en_attente_ig');
+                          $qa->whereNotNull('action');
                       }
                   ])
                   ->orderBy('reference', 'asc');
@@ -52,9 +52,9 @@ class ValidationRecommandationController extends Controller
             abort(403, 'Cette recommandation n\'est pas en attente de validation.');
         }
 
-        if (!$recommandation->plansAction()->where('statut_validation', 'en_attente_ig')->exists()) {
-            abort(403, 'Aucun plan d\'action en attente de validation.');
-        }
+            if (!$recommandation->plansAction()->whereNotNull('action')->exists()) {
+                abort(403, 'Aucun plan d\'action en attente de validation.');
+            }
 
         $recommandation->load([
             'structure',
@@ -62,7 +62,7 @@ class ValidationRecommandationController extends Controller
             'pointFocal',
             'responsable',
             'plansAction' => function ($q) {
-                $q->where('statut_validation', 'en_attente_ig');
+                    $q->whereNotNull('action');
             }
         ]);
 
@@ -83,24 +83,25 @@ class ValidationRecommandationController extends Controller
             abort(403);
         }
 
-        if (!$recommandation->plansAction()->where('statut_validation', 'en_attente_ig')->exists()) {
-            abort(403);
-        }
+            if (!$recommandation->plansAction()->whereNotNull('action')->exists()) {
+                abort(403);
+            }
 
-        // Valider tous les plans
-        $recommandation->plansAction()
-            ->where('statut_validation', 'en_attente_ig')
+        // Valider tous les plans (mise à jour d'état uniquement)
+            $recommandation->plansAction()
+                ->whereNotNull('action')
             ->update([
-                'statut_validation' => 'valide_ig',
                 'statut_execution' => 'non_demarre',
                 'validateur_ig_id' => Auth::id(),
                 'date_validation_ig' => now(),
-                'commentaire_validation_ig' => $request->commentaire
             ]);
 
-        // Mettre à jour la recommandation
+        // Mettre à jour la recommandation (stocker le commentaire de l'IG au niveau de la recommandation)
         $recommandation->update([
-            'statut' => 'plan_valide_ig'
+                'statut' => Recommandation::STATUT_PLAN_VALIDE_IG,
+                'commentaire_validation_ig' => $request->commentaire,
+                'validateur_ig_id' => Auth::id(),
+                'date_validation_ig' => now(),
         ]);
 
         return redirect()->route('inspecteur_general.validation_recommandations.index')
@@ -120,23 +121,24 @@ class ValidationRecommandationController extends Controller
             abort(403);
         }
 
-        if (!$recommandation->plansAction()->where('statut_validation', 'en_attente_ig')->exists()) {
-            abort(403);
-        }
+            if (!$recommandation->plansAction()->whereNotNull('action')->exists()) {
+                abort(403);
+            }
 
-        // Rejeter tous les plans
-        $recommandation->plansAction()
-            ->where('statut_validation', 'en_attente_ig')
+        // Rejeter tous les plans (on marque le validateur et la date, le motif est stocké sur la recommandation)
+            $recommandation->plansAction()
+                ->whereNotNull('action')
             ->update([
-                'statut_validation' => 'rejete_ig',
                 'validateur_ig_id' => Auth::id(),
                 'date_validation_ig' => now(),
-                'motif_rejet_ig' => $request->motif
             ]);
 
-        // Retour au responsable pour correction
+        // Retour au responsable pour correction et stocker le motif de rejet sur la recommandation
         $recommandation->update([
-            'statut' => 'plan_en_redaction'
+                'statut' => Recommandation::STATUT_PLAN_REJETE_IG,
+                'motif_rejet_ig' => $request->motif,
+                'validateur_ig_id' => Auth::id(),
+                'date_validation_ig' => now(),
         ]);
 
         return redirect()->route('inspecteur_general.validation_recommandations.index')

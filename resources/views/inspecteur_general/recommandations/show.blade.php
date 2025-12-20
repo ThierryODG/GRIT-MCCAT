@@ -14,19 +14,19 @@
                         <p class="text-gray-600">Référence: {{ $recommandation->reference }}</p>
                     </div>
                     <div class="flex gap-2">
-                        <a href="{{ route('inspecteur.validation.index') }}"
+                        <a href="{{ route('inspecteur_general.validation.index') }}"
                            class="bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600">
                             Retour
                         </a>
                         @if($recommandation->statut == 'en_attente_validation')
-                        <form method="POST" action="{{ route('inspecteur.validation.valider', $recommandation) }}" class="inline">
+                        <form method="POST" action="{{ route('inspecteur_general.validation.valider', $recommandation) }}" class="inline">
                             @csrf
                             <button type="submit"
                                     class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">
                                 Valider
                             </button>
                         </form>
-                        <form method="POST" action="{{ route('inspecteur.validation.rejeter', $recommandation) }}" class="inline">
+                        <form method="POST" action="{{ route('inspecteur_general.validation.rejeter', $recommandation) }}" class="inline">
                             @csrf
                             <button type="submit"
                                     class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700">
@@ -102,7 +102,7 @@
                 <div class="mt-8 p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <h3 class="text-lg font-semibold mb-4 text-yellow-800">Actions de Validation</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <form method="POST" action="{{ route('inspecteur.validation.valider', $recommandation) }}" class="space-y-4">
+                        <form method="POST" action="{{ route('inspecteur_general.validation.valider', $recommandation) }}" class="space-y-4">
                             @csrf
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Commentaire (optionnel)</label>
@@ -115,7 +115,7 @@
                             </button>
                         </form>
 
-                        <form method="POST" action="{{ route('inspecteur.validation.rejeter', $recommandation) }}" class="space-y-4">
+                        <form method="POST" action="{{ route('inspecteur_general.validation.rejeter', $recommandation) }}" class="space-y-4">
                             @csrf
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Commentaire (optionnel)</label>

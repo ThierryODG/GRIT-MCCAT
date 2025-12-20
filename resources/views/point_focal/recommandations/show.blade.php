@@ -16,6 +16,8 @@
             <p class="mt-1 text-gray-600">{{ $recommandation->titre }}</p>
         </div>
 
+
+
         <!-- Actions -->
         <div class="flex space-x-3">
             @if(in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction']))
@@ -29,15 +31,57 @@
                 <i class="mr-2 fas fa-plus"></i>
                 Créer un plan d'action
             </a>
+            <!-- Soumettre la planification: n'afficher le bouton que si la planification est complète et il y a au moins un plan -->
+            @if($recommandation->peutEtreSoumiseParPointFocal())
+            <form method="POST" action="{{ route('point_focal.recommandations.soumettre_planification', $recommandation) }}" onsubmit="return confirm('Soumettre la planification au responsable ? Cela verrouillera l\'édition jusqu\'à réponse.');">
+                @csrf
+                <button type="submit" class="flex items-center px-4 py-2 text-white bg-indigo-600 rounded-lg hover:bg-indigo-700">
+                    <i class="mr-2 fas fa-paper-plane"></i>
+                    Soumettre la planification
+                </button>
+            </form>
+            @else
+            <button disabled class="flex items-center px-4 py-2 text-white bg-indigo-300 rounded-lg cursor-not-allowed" title="Remplissez les informations de planification et créez au moins une action pour soumettre">
+                <i class="mr-2 fas fa-paper-plane"></i>
+                Soumettre la planification
+            </button>
+            @endif
             @endif
         </div>
     </div>
+
+    <!-- Banner when rejected by Responsable -->
+    @if(!empty($recommandation->motif_rejet_responsable))
+    <div class="mb-6 p-4 rounded-lg shadow-sm bg-yellow-50 border border-yellow-200">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0">
+                <i class="mt-1 text-yellow-600 fas fa-exclamation-triangle fa-2x"></i>
+            </div>
+            <div class="flex-1">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <strong class="text-yellow-900 text-lg">Rejeté par le Responsable</strong>
+                        <p class="mt-1 text-sm text-yellow-800">Le responsable a demandé des modifications — corrigez les éléments demandés puis soumettez de nouveau la planification.</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                            <a href="{{ route('point_focal.recommandations.edit', $recommandation) }}" class="inline-flex items-center px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700">
+                                <i class="mr-2 fas fa-edit"></i>Modifier les informations
+                            </a>
+                    </div>
+                </div>
+
+                <div class="mt-3 p-3 text-sm bg-white border border-yellow-200 rounded text-yellow-800 whitespace-pre-line">{{ $recommandation->motif_rejet_responsable }}</div>
+            </div>
+        </div>
+    </div>
+    @endif
 
     <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
         @php
             // Utiliser le motif au niveau RECOMMANDATION (pas au niveau plan)
             $globalMotifResponsable = $recommandation->motif_rejet_responsable;
-            $globalMotifIG = $recommandation->plansAction->pluck('motif_rejet_ig')->filter()->first();
+            // Priorité au motif stocké sur la recommandation (motif_rejet_ig), sinon tomber back sur le premier motif trouvé au niveau des plans
+            $globalMotifIG = $recommandation->motif_rejet_ig ?: $recommandation->plansAction->pluck('motif_rejet_ig')->filter()->first();
         @endphp
 
         <!-- Colonne principale -->
@@ -122,7 +166,7 @@
                 </div>
             </div>
             @else
-            <div class="p-6 bg-amber-50 border border-amber-200 rounded-lg shadow-sm">
+            <div class="p-6 border rounded-lg shadow-sm bg-amber-50 border-amber-200">
                 <div class="flex items-start">
                     <i class="mt-1 mr-3 text-amber-500 fas fa-info-circle"></i>
                     <div>
@@ -131,9 +175,9 @@
                             Vous devez d'abord remplir les informations de planification (indicateur, incidence, délai, dates)
                             avant de créer des actions.
                         </p>
-                        @if(in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction']))
+                        @if(in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction', 'plan_rejete_responsable']))
                         <a href="{{ route('point_focal.recommandations.edit', $recommandation) }}"
-                           class="inline-block mt-2 text-blue-600 hover:text-blue-800 font-medium">
+                           class="inline-block mt-2 font-medium text-blue-600 hover:text-blue-800">
                             Compléter les informations →
                         </a>
                         @endif
@@ -146,7 +190,7 @@
             <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-lg font-semibold text-gray-900">Plans d'action</h2>
-                    @if(in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction']))
+                    @if(in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction', 'plan_rejete_responsable']))
                     <a href="{{ route('point_focal.plans_action.create', $recommandation) }}"
                        class="flex items-center px-3 py-1 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700">
                         <i class="mr-1 fas fa-plus"></i>
@@ -162,9 +206,16 @@
                         <div class="flex items-start justify-between mb-3">
                             <h3 class="font-medium text-gray-900">Action #{{ $loop->iteration }}</h3>
                             <div class="flex space-x-2">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                    {{ $plan->statut_validation == 'valide_ig' ? 'bg-green-100 text-green-800' :
-                                       ($plan->statut_validation == 'rejete_ig' ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800') }}">
+                                @php
+                                    $recStatut = optional($plan->recommandation)->statut;
+                                    $statusClass = 'bg-yellow-100 text-yellow-800';
+                                    if (in_array($recStatut, ['plan_valide_ig', 'plan_valide_responsable'])) {
+                                        $statusClass = 'bg-green-100 text-green-800';
+                                    } elseif (in_array($recStatut, ['plan_rejete_ig', 'plan_rejete_responsable'])) {
+                                        $statusClass = 'bg-red-100 text-red-800';
+                                    }
+                                @endphp
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $statusClass }}">
                                     {{ $plan->statut_validation_label }}
                                 </span>
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
@@ -180,8 +231,8 @@
                         <!-- Motif de rejet responsable affiché au niveau global (colonne de droite) -->
 
                         <!-- Motif de rejet IG (également affiché au niveau global si présent) -->
-                        @if($plan->statut_validation == 'rejete_ig' && $plan->motif_rejet_ig)
-                        <div class="mb-3 p-3 bg-red-50 border border-red-300 rounded text-red-700 text-sm">
+                        @if(!empty($plan->motif_rejet_ig))
+                        <div class="p-3 mb-3 text-sm text-red-700 border border-red-300 rounded bg-red-50">
                             <strong>📋 Demande de modification de l'Inspecteur Général :</strong>
                             <p class="mt-1 whitespace-pre-line">{{ $plan->motif_rejet_ig }}</p>
                         </div>
@@ -195,7 +246,7 @@
                         </div>
 
                         <!-- Boutons d'actions -->
-                        @if(in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction']))
+                        @if(in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction', 'plan_rejete_responsable']))
                         <div class="flex mt-4 space-x-2">
                             <a href="{{ route('point_focal.plans_action.edit', $plan) }}"
                                class="flex items-center px-3 py-1 text-sm text-white bg-blue-600 rounded hover:bg-blue-700">
@@ -222,7 +273,7 @@
                 <div class="py-8 text-center text-gray-500">
                     <i class="mb-3 text-3xl fas fa-tasks"></i>
                     <p>Aucun plan d'action créé pour le moment</p>
-                    @if(in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction']))
+                    @if(in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction', 'plan_rejete_responsable']))
                     <a href="{{ route('point_focal.plans_action.create', $recommandation) }}" class="inline-block mt-2 text-blue-600 hover:text-blue-800">
                         Créer le premier plan d'action
                     </a>
@@ -249,7 +300,8 @@
                         $etapes = [
                             'point_focal_assigne' => 'Assigné au point focal',
                             'plan_en_redaction' => 'Plan en rédaction',
-                            'plan_soumis_responsable' => 'Soumis au responsable',
+                                'plan_soumis_responsable' => 'Soumis au responsable',
+                                'plan_rejete_responsable' => 'Rejeté par le Responsable',
                             'plan_valide_responsable' => 'Validé par le responsable',
                             'plan_soumis_ig' => 'Soumis à l\'IG',
                             'plan_valide_ig' => 'Validé par l\'IG',
@@ -286,25 +338,30 @@
 
             <!-- Motif global du Responsable -->
             @if($globalMotifResponsable)
-            <div class="p-6 bg-yellow-50 border-l-4 border-yellow-400 rounded-lg shadow-sm">
-                <h2 class="mb-2 text-lg font-semibold text-yellow-900 flex items-center gap-2">
+            <div class="p-6 rounded-lg shadow-sm bg-yellow-50 border border-yellow-200">
+                <h2 class="flex items-center gap-2 mb-2 text-lg font-semibold text-yellow-900">
                     <i class="fas fa-exclamation-triangle"></i>
                     Modifications demandées (Responsable)
                 </h2>
-                <p class="text-sm text-yellow-800 mb-3 italic">La recommandation a été rejetée. Veuillez corriger l'ensemble de votre contribution (planification et/ou plans d'action) selon les indications ci-dessous :</p>
-                <p class="text-yellow-800 whitespace-pre-line bg-white p-3 rounded border border-yellow-200">{{ $globalMotifResponsable }}</p>
+                <p class="mb-3 text-sm italic text-yellow-800">La recommandation a été rejetée. Veuillez corriger votre contribution (planification et/ou plans d'action) selon les indications ci-dessous :</p>
+                <p class="p-3 text-yellow-800 whitespace-pre-line bg-white border border-yellow-200 rounded">{{ $globalMotifResponsable }}</p>
+                <div class="mt-3 flex gap-2">
+                        <a href="{{ route('point_focal.recommandations.edit', $recommandation) }}" class="inline-flex items-center px-3 py-1 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700">
+                            <i class="mr-2 fas fa-edit"></i>Modifier les informations
+                        </a>
+                </div>
             </div>
             @endif
 
             <!-- Motif global de l'IG -->
             @if($globalMotifIG)
-            <div class="p-6 bg-red-50 border-l-4 border-red-400 rounded-lg shadow-sm">
-                <h2 class="mb-2 text-lg font-semibold text-red-900 flex items-center gap-2">
+            <div class="p-6 border-l-4 border-red-400 rounded-lg shadow-sm bg-red-50">
+                <h2 class="flex items-center gap-2 mb-2 text-lg font-semibold text-red-900">
                     <i class="fas fa-times-circle"></i>
                     Modifications demandées (Inspecteur Général)
                 </h2>
-                <p class="text-sm text-red-800 mb-3 italic">L'Inspecteur Général a demandé des modifications. Veuillez corriger votre contribution selon les indications suivantes :</p>
-                <p class="text-red-800 whitespace-pre-line bg-white p-3 rounded border border-red-200">{{ $globalMotifIG }}</p>
+                <p class="mb-3 text-sm italic text-red-800">L'Inspecteur Général a demandé des modifications. Veuillez corriger votre contribution selon les indications suivantes :</p>
+                <p class="p-3 text-red-800 whitespace-pre-line bg-white border border-red-200 rounded">{{ $globalMotifIG }}</p>
             </div>
             @endif
         </div>

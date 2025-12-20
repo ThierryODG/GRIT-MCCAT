@@ -104,7 +104,7 @@
                     Ouvrir la recommandation
                 </a>
 
-                @if(in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction']))
+                @if(in_array($recommandation->statut, ['point_focal_assigne', 'plan_en_redaction', 'plan_rejete_responsable']))
                 <a href="{{ route('point_focal.plans_action.create', $recommandation) }}"
                    class="flex items-center px-4 py-2 text-white transition-colors bg-green-600 rounded-lg hover:bg-green-700">
                     <i class="mr-2 fas fa-edit"></i>

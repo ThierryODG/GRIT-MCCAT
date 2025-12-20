@@ -83,16 +83,19 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             @php
+                                $recStatut = optional($plan->recommandation)->statut;
                                 $validationColors = [
-                                    'en_attente_responsable' => 'bg-yellow-100 text-yellow-800',
-                                    'valide_responsable' => 'bg-blue-100 text-blue-800',
-                                    'rejete_responsable' => 'bg-red-100 text-red-800',
-                                    'en_attente_ig' => 'bg-orange-100 text-orange-800',
-                                    'valide_ig' => 'bg-green-100 text-green-800',
-                                    'rejete_ig' => 'bg-red-100 text-red-800'
+                                    'plan_soumis_responsable' => 'bg-yellow-100 text-yellow-800',
+                                    'plan_valide_responsable' => 'bg-green-100 text-green-800',
+                                    'plan_rejete_responsable' => 'bg-red-100 text-red-800',
+                                    'plan_soumis_ig' => 'bg-orange-100 text-orange-800',
+                                    'plan_valide_ig' => 'bg-green-100 text-green-800',
+                                    'plan_rejete_ig' => 'bg-red-100 text-red-800'
                                 ];
+
+                                $colorClass = $validationColors[$recStatut] ?? 'bg-gray-100 text-gray-800';
                             @endphp
-                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $validationColors[$plan->statut_validation] ?? 'bg-gray-100 text-gray-800' }}">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium {{ $colorClass }}">
                                 {{ $plan->statut_validation_label }}
                             </span>
                         </td>
@@ -132,7 +135,7 @@
                                 <i class="mr-1 fas fa-eye"></i>Voir
                             </a>
 
-                            @if(in_array($plan->statut_validation, ['en_attente_responsable', 'rejete_responsable', 'rejete_ig']))
+                            @if(in_array(optional($plan->recommandation)->statut, ['plan_soumis_responsable', 'plan_rejete_responsable', 'plan_rejete_ig']))
                             <a href="{{ route('point_focal.plans_action.edit', $plan) }}"
                                class="px-3 py-1 text-green-600 transition-colors rounded-md hover:text-green-900 bg-green-50 hover:bg-green-100">
                                 <i class="mr-1 fas fa-edit"></i>Modifier
