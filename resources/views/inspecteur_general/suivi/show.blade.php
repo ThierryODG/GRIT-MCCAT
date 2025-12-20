@@ -11,11 +11,13 @@
                 Suivi : {{ $recommandation->reference }}
             </h1>
             <div class="flex items-center gap-2 mt-1">
-                <span class="text-gray-600 text-sm">{{Str::limit($recommandation->titre, 80)}}</span>
+                <span class="px-2 py-0.5 rounded text-xs font-semibold bg-gray-100 text-gray-600">{{ $recommandation->structure->nom }}</span>
+                <span class="text-gray-400">|</span>
+                <span class="text-gray-600 text-sm">{{Str::limit($recommandation->titre, 60)}}</span>
             </div>
         </div>
         <div class="flex items-center gap-4">
-            <a href="{{ route('responsable.suivi.index') }}" class="text-gray-500 hover:text-gray-700 mr-4">
+            <a href="{{ route('inspecteur_general.suivi.index') }}" class="text-gray-500 hover:text-gray-700 mr-4">
                 <i class="fas fa-arrow-left mr-1"></i> Retour
             </a>
             <div class="text-right">

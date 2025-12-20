@@ -5,31 +5,23 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
-class Rapport extends Model
+class Commentaire extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'titre',
-        'path',
-        'annee',
-        'type',
         'user_id',
         'recommandation_id',
-        'description',
+        'destinataire_role',
+        'contenu',
+        'type',
     ];
 
-    /**
-     * Relation avec l'utilisateur (Créateur)
-     */
     public function user()
     {
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * Relation avec la recommandation (Optionnel)
-     */
     public function recommandation()
     {
         return $this->belongsTo(Recommandation::class);

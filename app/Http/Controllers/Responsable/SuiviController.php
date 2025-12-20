@@ -14,7 +14,14 @@ class SuiviController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Recommandation::where('responsable_id', Auth::id());
+        $query = Recommandation::where('responsable_id', Auth::id())
+            ->whereIn('statut', [
+                'plan_valide_ig',
+                'en_execution',
+                'execution_terminee',
+                'demande_cloture',
+                'cloturee'
+            ]);
 
         // Filtres
         if ($request->filled('statut')) {
@@ -33,7 +40,7 @@ class SuiviController extends Controller
                 'its:id,name',
                 'inspecteurGeneral:id,name',
                 'pointFocal:id,name',
-                'planAction'
+                'plansAction'
             ])
             ->orderBy('date_limite', 'asc')
             ->paginate(20);
@@ -61,10 +68,15 @@ class SuiviController extends Controller
             'its:id,name',
             'inspecteurGeneral:id,name',
             'pointFocal:id,name,telephone',
-            'planAction'
+            'plansAction'
         ]);
 
-        return view('responsable.suivi.show', compact('recommandation'));
+        // Calcul progression
+        $totalActions = $recommandation->plansAction->count();
+        $completedActions = $recommandation->plansAction->where('statut_execution', 'termine')->count();
+        $globalProgress = $totalActions > 0 ? round(($completedActions / $totalActions) * 100) : 0;
+
+        return view('responsable.suivi.show', compact('recommandation', 'globalProgress'));
     }
 
     /**

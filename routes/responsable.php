@@ -30,4 +30,8 @@ Route::prefix('responsable')->middleware(['auth'])->name('responsable.')->group(
     Route::get('/suivi', [SuiviController::class, 'index'])->name('suivi.index');
     Route::get('/suivi/{recommandation}', [SuiviController::class, 'show'])->name('suivi.show');
     Route::get('/suivi/export', [SuiviController::class, 'export'])->name('suivi.export');
+
+    // Rapports
+    Route::get('/rapports', [App\Http\Controllers\PointFocal\RapportController::class, 'index'])->name('rapports.index');
+    Route::get('/rapports/{rapport}', [App\Http\Controllers\PointFocal\RapportController::class, 'show'])->name('rapports.show');
 });

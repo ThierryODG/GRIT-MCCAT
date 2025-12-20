@@ -26,13 +26,18 @@ Route::prefix('its')->middleware(['auth', /*'its'*/])->name('its.')->group(funct
     Route::post('/cloture/{recommandation}', [ClotureController::class, 'cloturer'])->name('cloture.cloturer');
 
     // Rapports
-    Route::get('/rapports', [RapportController::class, 'index'])->name('rapports.index');
-    Route::get('/rapports/generer', [RapportController::class, 'generer'])->name('rapports.generer');
-    Route::post('/rapports/generer', [RapportController::class, 'generateReport'])->name('rapports.generate');
+    Route::get('/rapports', [App\Http\Controllers\PointFocal\RapportController::class, 'index'])->name('rapports.index');
+    Route::get('/rapports/{rapport}', [App\Http\Controllers\PointFocal\RapportController::class, 'show'])->name('rapports.show');
 
     // Soumettre une recommandation à l'IG
     Route::post('/recommandations/{recommandation}/soumettre', [RecommandationController::class, 'soumettre'])
         ->name('recommandations.soumettre');
+
+    // Suivi de l'exécution
+    Route::get('/recommandations/{recommandation}/suivi', [RecommandationController::class, 'suivi'])
+        ->name('recommandations.suivi');
+    Route::post('/recommandations/{recommandation}/rappel', [RecommandationController::class, 'rappel'])
+        ->name('recommandations.rappel');
 
     // Rejeter une demande de clôture
     Route::post('/cloture/{recommandation}/rejeter', [ClotureController::class, 'rejeter'])

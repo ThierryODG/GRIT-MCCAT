@@ -85,28 +85,52 @@ class DashboardController extends Controller
     /**
      * Suivi global des recommandations validées par l'IG
      */
+    /**
+     * Suivi global des recommandations validées par l'IG
+     */
     public function suivi()
     {
         $recommandations = Recommandation::where('inspecteur_general_id', Auth::id())
-            ->with(['its:id,name,email', 'pointFocal:id,name', 'planAction', 'structure:id,nom']) // CORRIGÉ : structure au lieu de direction
+            ->with(['its:id,name,email', 'pointFocal:id,name', 'plansAction', 'structure:id,nom,sigle'])
             ->whereIn('statut', [
-                'validee_ig',
-                'transmise_structure',
-                'point_focal_assigne',
-                'plan_en_redaction',
-                'plan_soumis_responsable',
-                'plan_valide_responsable',
-                'plan_soumis_ig',
                 'plan_valide_ig',
-                'plan_rejete_ig',
                 'en_execution',
+                'execution_terminee',
                 'demande_cloture',
                 'cloturee'
             ])
             ->orderBy('created_at', 'desc')
-            ->paginate(15);
+            ->get();
 
-        return view('inspecteur_general.suivi.index', compact('recommandations'));
+        // Grouper par structure
+        $structures = $recommandations->groupBy('structure_id')->map(function ($items) {
+            return [
+                'info' => $items->first()->structure,
+                'recommandations' => $items
+            ];
+        });
+
+        return view('inspecteur_general.suivi.index', compact('structures'));
+    }
+
+    /**
+     * Vue détaillée du suivi (Stepper lecture seule)
+     */
+    public function showSuivi(Recommandation $recommandation)
+    {
+        // Vérifier l'accès
+        if ($recommandation->inspecteur_general_id !== Auth::id()) {
+            abort(403);
+        }
+
+        $recommandation->load(['plansAction', 'pointFocal', 'structure', 'its']);
+
+        // Calcul progression
+        $totalActions = $recommandation->plansAction->count();
+        $completedActions = $recommandation->plansAction->where('statut_execution', 'termine')->count();
+        $globalProgress = $totalActions > 0 ? round(($completedActions / $totalActions) * 100) : 0;
+
+        return view('inspecteur_general.suivi.show', compact('recommandation', 'globalProgress'));
     }
 
     /**

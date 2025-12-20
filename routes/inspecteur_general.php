@@ -33,5 +33,9 @@ Route::prefix('inspecteur-general')->middleware(['auth', /*'inspecteur_general'*
     // Autres routes
     Route::get('/recommandations', [ValidationController::class, 'recommandations'])->name('recommandations.index');
     Route::get('/suivi', [DashboardController::class, 'suivi'])->name('suivi.index');
-    Route::get('/rapports', [DashboardController::class, 'rapports'])->name('rapports.index');
+    Route::get('/suivi/{recommandation}', [DashboardController::class, 'showSuivi'])->name('suivi.show');
+    
+    // Rapports
+    Route::get('/rapports', [App\Http\Controllers\PointFocal\RapportController::class, 'index'])->name('rapports.index');
+    Route::get('/rapports/{rapport}', [App\Http\Controllers\PointFocal\RapportController::class, 'show'])->name('rapports.show');
 });

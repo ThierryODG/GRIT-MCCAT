@@ -139,6 +139,11 @@ class Recommandation extends Model
         return $this->hasMany(Notification::class);
     }
 
+    public function commentaires()
+    {
+        return $this->hasMany(Commentaire::class)->orderBy('created_at', 'desc');
+    }
+
     public function structure()
     {
         return $this->belongsTo(Structure::class);

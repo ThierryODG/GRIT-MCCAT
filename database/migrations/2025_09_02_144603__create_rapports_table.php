@@ -10,10 +10,13 @@ return new class extends Migration
     {
         Schema::create('rapports', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['statistiques', 'details', 'cloture', 'global'])->default('details');
-            $table->text('contenu')->nullable();
-            $table->datetime('date_generation');
-            $table->foreignId('utilisateur_id')->constrained('users')->onDelete('cascade');
+            $table->string('titre');
+            $table->string('path'); // Chemin du fichier PDF
+            $table->integer('annee');
+            $table->string('type')->default('general'); // 'execution', 'cloture', 'global'
+            $table->foreignId('user_id')->constrained()->onDelete('cascade'); // Créateur
+            $table->foreignId('recommandation_id')->nullable()->constrained()->onDelete('set null');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }

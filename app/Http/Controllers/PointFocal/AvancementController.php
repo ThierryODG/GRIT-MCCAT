@@ -11,94 +11,168 @@ use Illuminate\Support\Facades\Auth;
 class AvancementController extends Controller
 {
     /**
-     * Liste des plans d'action en cours d'exécution
+     * Liste des dossiers (Recommandations) en cours d'exécution
      */
     public function index()
     {
-        $baseQuery = PlanAction::where('point_focal_id', Auth::id())
-            ->whereHas('recommandation', function ($q) {
-                $q->where('statut', Recommandation::STATUT_PLAN_VALIDE_IG);
-            });
+        // On récupère les recommandations assignées au Point Focal connecté
+        // et qui sont dans une phase d'exécution (ou validées par IG pour commencer)
+        $recommandations = Recommandation::where('point_focal_id', Auth::id())
+            ->whereIn('statut', [
+                Recommandation::STATUT_PLAN_VALIDE_IG,
+                Recommandation::STATUT_EN_EXECUTION,
+                Recommandation::STATUT_EXECUTION_TERMINEE,
+                Recommandation::STATUT_DEMANDE_CLOTURE
+            ])
+            ->with(['plansAction']) // Eager load pour calculer la progression
+            ->orderBy('updated_at', 'desc')
+            ->paginate(10);
 
-        // Counters for dashboard
-        $totalCount = (clone $baseQuery)->count();
-        $notStarted = (clone $baseQuery)->where(function($q){
-            $q->whereNull('statut_execution')->orWhere('statut_execution', 'non_demarre');
-        })->count();
-        $inProgress = (clone $baseQuery)->where('statut_execution', 'en_cours')->count();
-        $done = (clone $baseQuery)->where('statut_execution', 'termine')->count();
+        // Calcul des statistiques pour le dashboard
+        $total = $recommandations->total();
+        $enCours = Recommandation::where('point_focal_id', Auth::id())
+            ->where('statut', Recommandation::STATUT_EN_EXECUTION)->count();
+        $termines = Recommandation::where('point_focal_id', Auth::id())
+            ->whereIn('statut', [Recommandation::STATUT_EXECUTION_TERMINEE, Recommandation::STATUT_DEMANDE_CLOTURE])->count();
 
-        $plansActions = $baseQuery
-            ->with(['recommandation' => function($q){ $q->select('id','reference','titre'); }])
-            ->orderBy('created_at', 'asc')
-            ->paginate(15);
-
-        return view('point_focal.avancement.index', compact('plansActions', 'totalCount', 'notStarted', 'inProgress', 'done'));
+        return view('point_focal.avancement.index', compact('recommandations', 'total', 'enCours', 'termines'));
     }
 
     /**
-     * Formulaire de mise à jour de l'avancement
+     * Interface d'exécution (Stepper) pour une recommandation
      */
-    public function edit(PlanAction $planAction)
+    public function show(Recommandation $recommandation)
     {
         // Vérifications
-        if ($planAction->point_focal_id !== Auth::id()) {
-            abort(403, 'Ce plan ne vous est pas assigné.');
+        if ($recommandation->point_focal_id !== Auth::id()) {
+            abort(403, 'Ce dossier ne vous est pas assigné.');
         }
 
-        if (! $planAction->recommandation || $planAction->recommandation->statut !== Recommandation::STATUT_PLAN_VALIDE_IG) {
-            return redirect()->route('point_focal.avancement.index')
-                ->with('error', 'Ce plan n\'est pas encore validé.');
+        if (!in_array($recommandation->statut, [
+            Recommandation::STATUT_PLAN_VALIDE_IG,
+            Recommandation::STATUT_EN_EXECUTION,
+            Recommandation::STATUT_EXECUTION_TERMINEE
+        ])) {
+             // Si déjà clôturé ou en demande, on peut rediriger ou afficher en lecture seule (à voir)
+             // Pour l'instant on laisse l'accès mais on bloquera les modifs dans la vue si nécessaire
         }
 
-        $planAction->load('recommandation');
+        $recommandation->load('plansAction');
+        
+        // Calcul de la progression globale
+        $totalActions = $recommandation->plansAction->count();
+        $completedActions = $recommandation->plansAction->where('statut_execution', 'termine')->count();
+        $globalProgress = $totalActions > 0 ? round(($completedActions / $totalActions) * 100) : 0;
 
-        return view('point_focal.avancement.edit', compact('planAction'));
+        return view('point_focal.avancement.show', compact('recommandation', 'globalProgress'));
     }
 
     /**
-     * Mettre à jour l'avancement
+     * Mettre à jour une action spécifique (API / Ajax)
      */
-    public function update(Request $request, PlanAction $planAction)
+    public function updateAction(Request $request, PlanAction $planAction)
     {
         // Vérifications
         if ($planAction->point_focal_id !== Auth::id()) {
-            abort(403);
+            return response()->json(['error' => 'Non autorisé'], 403);
         }
 
         $validated = $request->validate([
-            'pourcentage_avancement' => 'required|integer|min:0|max:100',
+            'statut_execution' => 'required|in:non_demarre,en_cours,termine',
             'commentaire_avancement' => 'nullable|string|max:1000',
         ]);
 
-        // Mettre à jour l'avancement
+        // Mise à jour de l'action
         $planAction->update([
-            'pourcentage_avancement' => $validated['pourcentage_avancement'],
+            'statut_execution' => $validated['statut_execution'],
             'commentaire_avancement' => $validated['commentaire_avancement'],
+            // On met à jour le pourcentage individuel pour garder la cohérence (100% si terminé, 0 sinon)
+            'pourcentage_avancement' => $validated['statut_execution'] === 'termine' ? 100 : ($validated['statut_execution'] === 'en_cours' ? 50 : 0),
         ]);
 
-        // Changer le statut d'exécution selon le pourcentage
-        if ($validated['pourcentage_avancement'] == 0) {
-            $planAction->update(['statut_execution' => 'non_demarre']);
-        } elseif ($validated['pourcentage_avancement'] < 100) {
-            $planAction->update(['statut_execution' => 'en_cours']);
+        // Mise à jour du statut global de la recommandation si c'est le début
+        if ($planAction->recommandation->statut === Recommandation::STATUT_PLAN_VALIDE_IG) {
             $planAction->recommandation->update(['statut' => Recommandation::STATUT_EN_EXECUTION]);
-        } else {
-            $planAction->update(['statut_execution' => 'termine']);
-            $planAction->recommandation->update(['statut' => Recommandation::STATUT_EXECUTION_TERMINEE]);
         }
 
-        // If AJAX/JSON request, return JSON response for immediate UI update
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'message' => 'Avancement mis à jour avec succès.',
-                'pourcentage' => $planAction->pourcentage_avancement,
-                'statut_execution' => $planAction->statut_execution,
-            ]);
+        // Recalcul de la progression globale
+        $recommandation = $planAction->recommandation;
+        $totalActions = $recommandation->plansAction()->count();
+        $completedActions = $recommandation->plansAction()->where('statut_execution', 'termine')->count();
+        $globalProgress = $totalActions > 0 ? round(($completedActions / $totalActions) * 100) : 0;
+
+        // Si 100%, on peut passer en EXECUTION_TERMINEE (optionnel, ou attendre la demande de clôture)
+        if ($globalProgress == 100 && $recommandation->statut !== Recommandation::STATUT_EXECUTION_TERMINEE) {
+             $recommandation->update(['statut' => Recommandation::STATUT_EXECUTION_TERMINEE]);
+        } elseif ($globalProgress < 100 && $recommandation->statut === Recommandation::STATUT_EXECUTION_TERMINEE) {
+             // Si on revient en arrière
+             $recommandation->update(['statut' => Recommandation::STATUT_EN_EXECUTION]);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Action mise à jour.',
+            'action_statut' => $planAction->statut_execution,
+            'global_progress' => $globalProgress,
+            'can_close' => $globalProgress == 100
+        ]);
+    }
+
+    /**
+     * Demander la clôture du dossier
+     */
+    public function demanderCloture(Request $request, Recommandation $recommandation)
+    {
+        if ($recommandation->point_focal_id !== Auth::id()) {
+            abort(403);
+        }
+
+        // Vérifier que tout est terminé
+        $totalActions = $recommandation->plansAction()->count();
+        $completedActions = $recommandation->plansAction()->where('statut_execution', 'termine')->count();
+        
+        if ($totalActions === 0 || $completedActions < $totalActions) {
+            return back()->with('error', 'Toutes les actions doivent être terminées avant de demander la clôture.');
+        }
+
+        $recommandation->update([
+            'statut' => Recommandation::STATUT_DEMANDE_CLOTURE,
+            // 'commentaire_demande_cloture' => $request->input('commentaire_cloture'), // Obsolète, utiliser Commentaire
+        ]);
 
         return redirect()->route('point_focal.avancement.index')
-            ->with('success', 'Avancement mis à jour avec succès.');
+            ->with('success', 'La demande de clôture a été envoyée avec succès.');
+    }
+
+    /**
+     * Envoyer un rappel (via Commentaire)
+     */
+    public function rappel(Request $request, Recommandation $recommandation)
+    {
+        if ($recommandation->point_focal_id !== Auth::id()) {
+            abort(403, 'Action non autorisée.');
+        }
+
+        $validated = $request->validate([
+            'destinataire' => 'required|in:responsable,inspecteur_general',
+            'message' => 'nullable|string|max:1000',
+        ]);
+
+        // Créer le commentaire de type "rappel"
+        $recommandation->commentaires()->create([
+            'user_id' => Auth::id(),
+            'destinataire_role' => $validated['destinataire'],
+            'contenu' => $validated['message'] ?? 'Rappel envoyé.',
+            'type' => 'rappel',
+        ]);
+
+        // TODO: Envoyer une notification réelle (Email/DB Notification)
+
+        $destinataireLabel = match($validated['destinataire']) {
+            'responsable' => 'Responsable',
+            'inspecteur_general' => 'Inspecteur Général',
+        };
+
+        return back()->with('success', "Rappel envoyé avec succès au {$destinataireLabel}.");
     }
 }

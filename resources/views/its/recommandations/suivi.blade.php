@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Détail du Suivi')
+@section('title', 'Suivi de l\'exécution')
 
 @section('content')
 <div class="container mx-auto px-4 py-6" x-data="{ currentStep: 0 }">
@@ -10,12 +10,10 @@
             <h1 class="text-2xl font-bold text-gray-800">
                 Suivi : {{ $recommandation->reference }}
             </h1>
-            <div class="flex items-center gap-2 mt-1">
-                <span class="text-gray-600 text-sm">{{Str::limit($recommandation->titre, 80)}}</span>
-            </div>
+            <p class="text-gray-600">{{Str::limit($recommandation->titre, 80)}}</p>
         </div>
         <div class="flex items-center gap-4">
-            <a href="{{ route('responsable.suivi.index') }}" class="text-gray-500 hover:text-gray-700 mr-4">
+            <a href="{{ route('its.recommandations.show', $recommandation) }}" class="text-gray-500 hover:text-gray-700 mr-4">
                 <i class="fas fa-arrow-left mr-1"></i> Retour
             </a>
             <div class="text-right">

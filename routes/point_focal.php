@@ -28,10 +28,18 @@ Route::prefix('point-focal')->middleware(['auth'])->name('point_focal.')->group(
     Route::delete('/plans-action/{planAction}', [PlanActionController::class, 'destroy'])->name('plans_action.destroy');
 
     // Avancement
+    // Avancement
     Route::get('/avancement', [AvancementController::class, 'index'])->name('avancement.index');
-    Route::get('/avancement/{planAction}/edit', [AvancementController::class, 'edit'])->name('avancement.edit');
-    Route::put('/avancement/{planAction}', [AvancementController::class, 'update'])->name('avancement.update');
+    Route::get('/avancement/{recommandation}', [AvancementController::class, 'show'])->name('avancement.show');
+    Route::put('/avancement/action/{planAction}', [AvancementController::class, 'updateAction'])->name('avancement.update_action');
+    Route::post('/avancement/{recommandation}/cloture', [AvancementController::class, 'demanderCloture'])->name('avancement.cloture');
+    Route::post('/avancement/{recommandation}/rappel', [AvancementController::class, 'rappel'])->name('avancement.rappel');
 
+    // Rapports
+    Route::get('/rapports', [App\Http\Controllers\PointFocal\RapportController::class, 'index'])->name('rapports.index');
+    Route::get('/rapports/create', [App\Http\Controllers\PointFocal\RapportController::class, 'create'])->name('rapports.create');
+    Route::post('/rapports', [App\Http\Controllers\PointFocal\RapportController::class, 'store'])->name('rapports.store');
+    Route::get('/rapports/{rapport}', [App\Http\Controllers\PointFocal\RapportController::class, 'show'])->name('rapports.show');
 
     // Ajoutez cette ligne dans vos routes point-focal
     Route::get('/dossier/its/{its}', [RecommandationController::class, 'dossierIts'])->name('dossier.its');

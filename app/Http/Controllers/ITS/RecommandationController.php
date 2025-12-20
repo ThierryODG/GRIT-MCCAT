@@ -244,4 +244,53 @@ class RecommandationController extends Controller
         return redirect()->route('its.recommandations.index')
             ->with('success', 'Recommandation soumise à l\'Inspecteur Général avec succès.');
     }
+    public function suivi(Recommandation $recommandation)
+    {
+        // Vérifier que l'utilisateur peut voir cette recommandation
+        if ($recommandation->its_id !== Auth::id()) {
+            abort(403, 'Action non autorisée.');
+        }
+
+        $recommandation->load(['plansAction', 'pointFocal']);
+
+        // Calcul de la progression globale
+        $totalActions = $recommandation->plansAction->count();
+        $completedActions = $recommandation->plansAction->where('statut_execution', 'termine')->count();
+        $globalProgress = $totalActions > 0 ? round(($completedActions / $totalActions) * 100) : 0;
+
+        return view('its.recommandations.suivi', compact('recommandation', 'globalProgress'));
+    }
+
+    /**
+     * Envoyer un rappel
+     */
+    public function rappel(Request $request, Recommandation $recommandation)
+    {
+        if ($recommandation->its_id !== Auth::id()) {
+            abort(403, 'Action non autorisée.');
+        }
+
+        $validated = $request->validate([
+            'destinataire' => 'required|in:point_focal,responsable,inspecteur_general',
+            'message' => 'nullable|string|max:1000',
+        ]);
+
+        // Créer le commentaire de type "rappel"
+        $recommandation->commentaires()->create([
+            'user_id' => Auth::id(),
+            'destinataire_role' => $validated['destinataire'],
+            'contenu' => $validated['message'] ?? 'Rappel envoyé.',
+            'type' => 'rappel',
+        ]);
+
+        // TODO: Envoyer une notification réelle (Email/DB Notification)
+
+        $destinataireLabel = match($validated['destinataire']) {
+            'point_focal' => 'Point Focal',
+            'responsable' => 'Responsable',
+            'inspecteur_general' => 'Inspecteur Général',
+        };
+
+        return back()->with('success', "Rappel envoyé avec succès au {$destinataireLabel}.");
+    }
 }

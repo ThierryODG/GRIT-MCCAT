@@ -1,72 +1,94 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Suivi des Plans d\'Action') }}
-        </h2>
-    </x-slot>
+@extends('layouts.app')
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900 dark:text-gray-100">
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                            <thead class="bg-gray-50 dark:bg-gray-700">
-                                <tr>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Recommandation</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions Planifiées</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Progression</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date Limite</th>
-                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Statut</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                                @forelse ($planActions as $plan)
-                                    <tr>
-                                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                            {{ Str::limit($plan->recommandation->contenu, 100) }}
-                                        </td>
-                                        <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                                            {{ $plan->actions_planifiees }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            <div class="relative pt-1">
-                                                <div class="overflow-hidden h-2 text-xs flex rounded bg-gray-200 dark:bg-gray-700">
-                                                    <div style="width:{{ $plan->progression }}%"
-                                                         class="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-blue-500">
-                                                    </div>
-                                                </div>
-                                                <span class="text-xs mt-1 block">{{ $plan->progression }}%</span>
-                                            </div>
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                            {{ $plan->date_limite ? $plan->date_limite->format('d/m/Y') : 'Non définie' }}
-                                        </td>
-                                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                                            <span class="px-2 py-1 text-xs rounded-full
-                                                @if($plan->statut === 'terminé') bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300
-                                                @elseif($plan->statut === 'en_cours') bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300
-                                                @else bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300
-                                                @endif">
-                                                {{ ucfirst($plan->statut) }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                                            Aucun plan d'action trouvé
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="mt-4">
-                        {{ $planActions->links() }}
-                    </div>
-                </div>
-            </div>
+@section('title', 'Suivi des Recommandations')
+
+@section('content')
+    <div class="container mx-auto px-4 py-6">
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Suivi de l'exécution</h1>
+            <p class="text-gray-600 mt-2">Suivi des recommandations par structure</p>
         </div>
+
+        @if($structures->isEmpty())
+            <div class="bg-white rounded-lg shadow-sm p-8 text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+                    <i class="fas fa-clipboard-check text-2xl text-gray-400"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900">Aucune recommandation en cours de suivi</h3>
+                <p class="text-gray-500 mt-1">Les recommandations validées apparaîtront ici.</p>
+            </div>
+        @else
+            <div class="space-y-8">
+                @foreach($structures as $structureId => $data)
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        <!-- Structure Header -->
+                        <div class="bg-gray-50 px-6 py-4 border-b border-gray-100 flex justify-between items-center">
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                    {{ $data['info']->sigle }}
+                                </div>
+                                <div>
+                                    <h2 class="text-lg font-bold text-gray-800">{{ $data['info']->nom }}</h2>
+                                    <span class="text-sm text-gray-500">{{ $data['recommandations']->count() }} dossiers
+                                        suivis</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Recommendations List -->
+                        <div class="divide-y divide-gray-50">
+                            @foreach($data['recommandations'] as $recommandation)
+                                @php
+                                    $total = $recommandation->plansAction->count();
+                                    $done = $recommandation->plansAction->where('statut_execution', 'termine')->count();
+                                    $percent = $total > 0 ? round(($done / $total) * 100) : 0;
+                                @endphp
+                                <div class="p-6 hover:bg-gray-50 transition-colors">
+                                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                        <div class="flex-1">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span
+                                                    class="text-xs font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded">{{ $recommandation->reference }}</span>
+                                                <span
+                                                    class="text-xs px-2 py-0.5 rounded-full 
+                                                                {{ $recommandation->statut === 'demande_cloture' ? 'bg-purple-100 text-purple-800' :
+                                ($percent >= 100 ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800') }}">
+                                                    {{ $recommandation->statut === 'demande_cloture' ? 'Demande de Clôture' : ($percent >= 100 ? 'Terminé' : 'En cours') }}
+                                                </span>
+                                            </div>
+                                            <h3 class="text-base font-semibold text-gray-800 mb-2">{{ $recommandation->titre }}</h3>
+                                            <div class="flex items-center gap-4 text-sm text-gray-500">
+                                                <span><i class="fas fa-user-tie mr-1"></i>
+                                                    {{ $recommandation->pointFocal->name ?? 'Non assigné' }}</span>
+                                                <span><i class="fas fa-calendar mr-1"></i> Fin:
+                                                    {{ $recommandation->date_limite->format('d/m/Y') }}</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="w-full md:w-1/3 flex items-center gap-4">
+                                            <div class="flex-1">
+                                                <div class="flex justify-between text-xs mb-1">
+                                                    <span class="font-medium text-gray-700">Progression</span>
+                                                    <span class="font-bold text-blue-600">{{ $percent }}%</span>
+                                                </div>
+                                                <div class="w-full bg-gray-200 rounded-full h-2">
+                                                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                                                        style="width: {{ $percent }}%"></div>
+                                                </div>
+                                            </div>
+                                            <a href="{{ route('inspecteur_general.suivi.show', $recommandation) }}"
+                                                class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition shadow-sm text-sm font-medium whitespace-nowrap">
+                                                Détails
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
-</x-app-layout>
+@endsection
