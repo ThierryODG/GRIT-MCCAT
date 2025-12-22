@@ -8,8 +8,11 @@ use App\Models\Structure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class ValidationController extends Controller
+class RecommandationController extends Controller
 {
+    /**
+     * Liste des recommandations en attente de validation initiale IG
+     */
     public function index()
     {
         $query = Recommandation::with(['its', 'its.structure'])
@@ -19,6 +22,7 @@ class ValidationController extends Controller
         if (request('statut')) {
             $query->where('statut', request('statut'));
         } else {
+            // Par défaut, celles soumises à l'IG pour validation initiale
             $query->where('statut', 'soumise_ig');
         }
 
@@ -33,15 +37,21 @@ class ValidationController extends Controller
         $recommandations = $query->paginate(15);
         $structures = Structure::orderBy('nom')->get();
 
-        return view('inspecteur_general.validation.index', compact('recommandations', 'structures'));
+        return view('inspecteur_general.recommandations.index', compact('recommandations', 'structures'));
     }
 
+    /**
+     * Détails d'une recommandation pour validation initiale
+     */
     public function show(Recommandation $recommandation)
     {
-        $recommandation->load('its');
-        return view('inspecteur_general.validation.show', compact('recommandation'));
+        $recommandation->load(['its', 'structure']);
+        return view('inspecteur_general.recommandations.show', compact('recommandation'));
     }
 
+    /**
+     * Valider la recommandation initialement (permet aux structures de commencer à planifier)
+     */
     public function valider(Request $request, Recommandation $recommandation)
     {
         if ($recommandation->statut !== 'soumise_ig') {
@@ -55,10 +65,13 @@ class ValidationController extends Controller
             'commentaire_ig' => $request->commentaire
         ]);
 
-        return redirect()->route('inspecteur_general.validation.index')
+        return redirect()->route('inspecteur_general.recommandations.index')
             ->with('success', 'Recommandation validée avec succès.');
     }
 
+    /**
+     * Rejeter la recommandation initialement (retour à l'ITS)
+     */
     public function rejeter(Request $request, Recommandation $recommandation)
     {
         $request->validate([
@@ -76,7 +89,7 @@ class ValidationController extends Controller
             'motif_rejet_ig' => $request->motif
         ]);
 
-        return redirect()->route('inspecteur_general.validation.index')
+        return redirect()->route('inspecteur_general.recommandations.index')
             ->with('success', 'Recommandation rejetée.');
     }
 }

@@ -17,45 +17,18 @@ class RouteServiceProvider extends ServiceProvider
      * Define your route model bindings, pattern filters, etc.
      */
 
-public function boot()
-{
+    public function boot()
+    {
         $this->routes(function () {
-            
-            // Routes Inspecteur General
-            Route::prefix('inspecteur')
-                ->middleware(['web', 'auth', 'inspecteur_general'])
-                ->name('inspecteur.')
-                ->group(base_path('routes/inspecteur_general.php'));
+            // Utilise les routes définies dans web.php pour éviter la duplication
+            // ou chargez-les ici mais supprimez-les de web.php.
+            // On va privilégier le chargement standard via web.php/api.php si c'est ce que le projet utilise massivement.
+            Route::middleware('web')
+                ->group(base_path('routes/web.php'));
 
-            // Routes ITS
-            Route::prefix('its')
-                ->middleware(['web', 'auth', 'its'])
-                ->name('its.')
-                ->group(base_path('routes/its.php'));
-
-            // Routes Administrateur
-            Route::prefix('admin')
-                ->middleware(['web', 'auth', 'administrateur'])
-                ->name('admin.')
-                ->group(base_path('routes/administrateur.php'));
-
-            // Routes Responsable
-            Route::prefix('responsable')
-                ->middleware(['web', 'auth', 'responsable'])
-                ->name('responsable.')
-                ->group(base_path('routes/responsable.php'));
-
-            // Routes Point Focal
-            Route::prefix('point-focal')
-                ->middleware(['web', 'auth', 'point_focal'])
-                ->name('point_focal.')
-                ->group(base_path('routes/point_focal.php'));
-
-            // Routes Cabinet Ministre
-            Route::prefix('cabinet-ministre')
-                ->middleware(['web', 'auth', 'cabinet_ministre'])
-                ->name('cabinet_ministre.')
-                ->group(base_path('routes/cabinet_ministre.php'));
+            Route::prefix('api')
+                ->middleware('api')
+                ->group(base_path('routes/api.php'));
         });
     }
 }

@@ -50,7 +50,9 @@ Route::middleware('auth')->group(function () {
 // ==================== NOTIFICATIONS ====================
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::post('/notifications/{id}/marquer-lu', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
+    Route::get('/notifications/list', [NotificationController::class, 'list'])->name('notifications.list'); // AJAX
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read'); // AJAX
+    // Route::post('/notifications/{id}/marquer-lu', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
     Route::post('/notifications/tout-marquer-lu', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
 });
 

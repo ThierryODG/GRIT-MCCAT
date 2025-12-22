@@ -7,6 +7,9 @@ use App\Models\Recommandation;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use App\Notifications\RecommandationSoumise;
+use Illuminate\Support\Facades\Notification;
 
 class ValidationPlanController extends Controller
 {
@@ -147,6 +150,14 @@ class ValidationPlanController extends Controller
             logger()->warning('Notification PlanningReviewed (approved) failed: ' . $e->getMessage());
         }
 
+        // Notifier les Inspecteurs Généraux
+        $igs = User::whereHas('role', function($q) {
+            $q->where('nom', 'inspecteur_general');
+        })->get();
+        if($igs->count() > 0){
+            Notification::send($igs, new RecommandationSoumise($recommandation));
+        }
+
         return redirect()->route('responsable.validation_plans.index')
             ->with('success', 'Recommandation validée et transmise à l\'Inspecteur Général.');
     }
@@ -278,6 +289,14 @@ class ValidationPlanController extends Controller
             'commentaire_validation_responsable' => $request->commentaire ?? null
         ]);
 
+        // Notifier les Inspecteurs Généraux
+        $igs = User::whereHas('role', function($q) {
+            $q->where('nom', 'inspecteur_general');
+        })->get();
+        if($igs->count() > 0){
+            Notification::send($igs, new RecommandationSoumise($recommandation));
+        }
+
         return redirect()->route('responsable.validation_plans.index')
             ->with('success', 'Plan d\'action validé (recommandation transmise à l\'IG).');
     }
@@ -329,6 +348,14 @@ class ValidationPlanController extends Controller
         $recommandation->update([
             'statut' => Recommandation::STATUT_PLAN_SOUMIS_IG
         ]);
+
+        // Notifier les Inspecteurs Généraux
+        $igs = User::whereHas('role', function($q) {
+            $q->where('nom', 'inspecteur_general');
+        })->get();
+        if($igs->count() > 0){
+            Notification::send($igs, new RecommandationSoumise($recommandation));
+        }
 
         return back()->with('success', 'Recommandation transmise à l\'Inspecteur Général.');
     }

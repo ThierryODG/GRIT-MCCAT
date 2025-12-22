@@ -29,6 +29,11 @@ class PlanAction extends Model
         'pourcentage_avancement',
         'commentaire_avancement',
 
+        // DÉLAIS ET DATES (AUTOMATISÉS)
+        'delai_mois',
+        'date_debut_prevue',
+        'date_fin_prevue',
+
         // Relations
         'recommandation_id',
         'point_focal_id',
@@ -40,6 +45,8 @@ class PlanAction extends Model
         'date_validation_ig' => 'datetime',
         'pourcentage_avancement' => 'integer',
         'delai_mois' => 'integer',
+        'date_debut_prevue' => 'date',
+        'date_fin_prevue' => 'date',
     ];
 
     // ==================== RELATIONS ====================

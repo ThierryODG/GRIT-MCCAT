@@ -7,6 +7,9 @@ use App\Models\Recommandation;
 use App\Models\Structure;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use Illuminate\Support\Facades\Notification;
+use App\Notifications\RecommandationSoumise;
 
 class RecommandationController extends Controller
 {
@@ -239,7 +242,14 @@ class RecommandationController extends Controller
             'statut' => 'soumise_ig'
         ]);
 
-        // TODO: Envoyer une notification à l'IG
+        // Envoyer une notification à l'IG
+        $igs = User::whereHas('role', function($q) {
+            $q->where('nom', 'inspecteur_general');
+        })->get();
+
+        if($igs->count() > 0){
+             Notification::send($igs, new RecommandationSoumise($recommandation));
+        }
 
         return redirect()->route('its.recommandations.index')
             ->with('success', 'Recommandation soumise à l\'Inspecteur Général avec succès.');

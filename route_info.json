@@ -1,0 +1,1 @@
+﻿[{"domain":null,"method":"GET|HEAD","uri":"inspecteur-general\/dashboard","name":"inspecteur_general.dashboard","action":"App\\Http\\Controllers\\InspecteurGeneral\\DashboardController@index","middleware":["web","auth"]}]

@@ -6,11 +6,21 @@
     <div class="container mx-auto px-4 py-6" x-data="executionStepper()">
         <!-- Header -->
         <div class="mb-6 flex justify-between items-center">
-            <div>
-                <h1 class="text-2xl font-bold text-gray-800">
-                    Exécution : {{ $recommandation->reference }}
-                </h1>
-                <p class="text-gray-600">{{Str::limit($recommandation->titre, 80)}}</p>
+            <div class="flex items-center gap-4">
+                <a href="{{ route('point_focal.avancement.index') }}"
+                    class="p-2 bg-white border border-gray-200 rounded-lg text-gray-500 hover:text-blue-600 hover:border-blue-200 transition shadow-sm"
+                    title="Retour à la liste">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </a>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-800">
+                        Exécution : {{ $recommandation->reference }}
+                    </h1>
+                    <p class="text-gray-600">{{Str::limit($recommandation->titre, 80)}}</p>
+                </div>
             </div>
             <div class="flex items-center gap-4">
                 <div class="text-right">
@@ -95,27 +105,70 @@
             <div class="w-full lg:w-3/4 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col">
                 <template x-for="(action, index) in actions" :key="action.id">
                     <div x-show="currentStep === index" class="p-8 flex-1 flex flex-col h-full overflow-y-auto">
+                        <!-- Recommendation Context (Collapsible) -->
+                        <div class="mb-6" x-data="{ open: false }">
+                            <button @click="open = !open"
+                                class="w-full flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-gray-100 transition-colors">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 bg-blue-100 rounded-lg text-blue-600">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <span class="font-bold text-gray-700">Détails de la Recommandation</span>
+                                </div>
+                                <svg class="w-5 h-5 text-gray-400 transition-transform duration-200"
+                                    :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </button>
+                            <div x-show="open" x-collapse
+                                class="p-6 border-x border-b border-gray-100 rounded-b-xl bg-white grid grid-cols-1 md:grid-cols-2 gap-6"
+                                style="display: none;">
+                                <div>
+                                    <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Description
+                                    </h5>
+                                    <p class="text-sm text-gray-700 leading-relaxed">{{ $recommandation->description }}</p>
+                                </div>
+                                <div class="space-y-4">
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                                        <span class="text-sm text-gray-500">Inspecteur Technique</span>
+                                        <span
+                                            class="text-sm font-semibold text-gray-800">{{ $recommandation->its->name ?? 'N/A' }}</span>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                                        <span class="text-sm text-gray-500">Priorité</span>
+                                        <span
+                                            class="px-2 py-0.5 rounded text-xs font-bold uppercase {{ $recommandation->priorite === 'haute' ? 'bg-red-100 text-red-700' : ($recommandation->priorite === 'moyenne' ? 'bg-yellow-100 text-yellow-700' : 'bg-green-100 text-green-700') }}">
+                                            {{ ucfirst($recommandation->priorite) }}
+                                        </span>
+                                    </div>
+                                    <div class="flex justify-between items-center py-2 border-b border-gray-50">
+                                        <span class="text-sm text-gray-500">Date limite globale</span>
+                                        <span class="text-sm font-semibold text-gray-800">
+                                            {{ $recommandation->date_limite ? $recommandation->date_limite->format('d/m/Y') : 'Non définie' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Action Details -->
                         <div class="mb-8">
                             <span
                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 mb-4">
-                                Action #<span x-text="index + 1"></span>
+                                Action en cours : Étape #<span x-text="index + 1"></span>
                             </span>
                             <h2 class="text-2xl font-bold text-gray-900 mb-4" x-text="action.action"></h2>
 
-                            <div
-                                class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-lg border border-gray-100">
-                                <div>
-                                    <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Indicateurs
-                                    </h5>
-                                    <p class="text-gray-700" x-text="action.indicateurs || 'Non défini'"></p>
-                                </div>
-                                <div>
-                                    <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Échéance</h5>
-                                    <p class="text-gray-700"
-                                        x-text="action.date_fin_prevue ? new Date(action.date_fin_prevue).toLocaleDateString() : 'Non définie'">
-                                    </p>
-                                </div>
+                            <div class="bg-blue-50 p-6 rounded-lg border border-blue-100">
+                                <h5 class="text-xs font-bold text-blue-400 uppercase tracking-wider mb-1">Échéance de
+                                    l'action</h5>
+                                <p class="text-blue-900 font-semibold"
+                                    x-text="action.date_fin_prevue ? new Date(action.date_fin_prevue).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Non définie'">
+                                </p>
                             </div>
                         </div>
 
@@ -136,10 +189,11 @@
                                     <div class="flex items-center gap-4">
                                         <span class="text-sm text-gray-600">Statut actuel :</span>
                                         <span class="px-3 py-1 rounded-full text-sm font-medium" :class="{
-                                                            'bg-green-100 text-green-800': action.statut_execution === 'termine',
-                                                            'bg-orange-100 text-orange-800': action.statut_execution === 'en_cours',
-                                                            'bg-gray-100 text-gray-800': !action.statut_execution || action.statut_execution === 'non_demarre'
-                                                        }" x-text="formatStatus(action.statut_execution)"></span>
+                                                                            'bg-green-100 text-green-800': action.statut_execution === 'termine',
+                                                                            'bg-orange-100 text-orange-800': action.statut_execution === 'en_cours',
+                                                                            'bg-gray-100 text-gray-800': !action.statut_execution || action.statut_execution === 'non_demarre'
+                                                                        }"
+                                            x-text="formatStatus(action.statut_execution)"></span>
                                     </div>
 
                                     <div class="flex gap-3">
@@ -211,6 +265,11 @@
                             // Update local state
                             this.actions[index].statut_execution = status;
                             this.globalProgress = data.global_progress;
+
+                            // Mettre à jour toutes les actions si le serveur a renvoyé des réajustements
+                            if (data.updated_actions) {
+                                this.actions = data.updated_actions;
+                            }
 
                             // Optional: Show notification
                             // alert('Mise à jour effectuée');

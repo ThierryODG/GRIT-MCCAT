@@ -1,0 +1,1 @@
+﻿[{"domain":null,"method":"GET|HEAD","uri":"inspecteur-general\/plan-actions\/recommandation\/{recommandation}\/dossier","name":"inspecteur_general.plan_actions.recommandation_dossier","action":"App\\Http\\Controllers\\InspecteurGeneral\\PlanActionController@dossier","middleware":["web","auth"]}]

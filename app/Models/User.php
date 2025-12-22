@@ -90,10 +90,11 @@ class User extends Authenticatable
         return $this->hasMany(PlanAction::class, 'validateur_ig_id');
     }
 
-    public function notifications()
-    {
-        return $this->hasMany(Notification::class);
-    }
+    // RELATION SUPPRIMÉE POUR UTILISER LE TRAIT NOTIFIABLE STANDARD
+    // public function notifications()
+    // {
+    //     return $this->hasMany(Notification::class);
+    // }
 
     // ==================== MÉTHODES RÔLES ====================
 

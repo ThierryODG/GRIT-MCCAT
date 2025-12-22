@@ -24,7 +24,7 @@ class AvancementController extends Controller
                 Recommandation::STATUT_EXECUTION_TERMINEE,
                 Recommandation::STATUT_DEMANDE_CLOTURE
             ])
-            ->with(['plansAction']) // Eager load pour calculer la progression
+            ->with(['plansAction', 'its:id,name']) // Eager load pour calculer la progression et groupement
             ->orderBy('updated_at', 'desc')
             ->paginate(10);
 
@@ -95,8 +95,18 @@ class AvancementController extends Controller
             $planAction->recommandation->update(['statut' => Recommandation::STATUT_EN_EXECUTION]);
         }
 
-        // Recalcul de la progression globale
+        // Recalculer la progression globale
         $recommandation = $planAction->recommandation;
+
+        // Réajustement intelligent des échéances si une action est terminée
+        if ($validated['statut_execution'] === 'termine') {
+            try {
+                \App\Services\ExecutionSchedulingService::readjustSchedules($recommandation);
+            } catch (\Throwable $e) {
+                logger()->error('Dynamic rescheduling failed: ' . $e->getMessage());
+            }
+        }
+
         $totalActions = $recommandation->plansAction()->count();
         $completedActions = $recommandation->plansAction()->where('statut_execution', 'termine')->count();
         $globalProgress = $totalActions > 0 ? round(($completedActions / $totalActions) * 100) : 0;
@@ -111,10 +121,11 @@ class AvancementController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Action mise à jour.',
+            'message' => 'Action mise à jour et échéances réajustées.',
             'action_statut' => $planAction->statut_execution,
             'global_progress' => $globalProgress,
-            'can_close' => $globalProgress == 100
+            'can_close' => $globalProgress == 100,
+            'updated_actions' => $recommandation->plansAction // Retourner les actions avec les nouvelles dates
         ]);
     }
 

@@ -25,8 +25,8 @@
         </a>
 
         <!-- Validation Recommandations -->
-        <a href="{{ route('inspecteur_general.validation.index') }}"
-            class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('inspecteur_general.validation.*') ? 'bg-yellow-50 text-yellow-600 shadow-sm border-l-4 border-yellow-600' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}">
+        <a href="{{ route('inspecteur_general.recommandations.index') }}"
+            class="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 {{ request()->routeIs('inspecteur_general.recommandations.*') ? 'bg-yellow-50 text-yellow-600 shadow-sm border-l-4 border-yellow-600' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900' }}">
             <svg class="flex-shrink-0 w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />

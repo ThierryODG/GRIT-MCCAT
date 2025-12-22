@@ -2,40 +2,45 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\InspecteurGeneral\DashboardController;
-use App\Http\Controllers\InspecteurGeneral\ValidationController;
+use App\Http\Controllers\InspecteurGeneral\RecommandationController;
 use App\Http\Controllers\InspecteurGeneral\PlanActionController;
-use App\Http\Controllers\InspecteurGeneral\ValidationRecommandationController;
+use App\Http\Controllers\InspecteurGeneral\SuiviController;
+use App\Http\Controllers\InspecteurGeneral\RapportController;
 
 Route::prefix('inspecteur-general')->middleware(['auth', /*'inspecteur_general'*/])->name('inspecteur_general.')->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Routes pour les plans d'action
-    Route::get('/plan-actions', [PlanActionController::class, 'index'])->name('plan_actions.index');
-    Route::get('/plan-actions/{planAction}', [PlanActionController::class, 'show'])->name('plan_actions.show');
-    Route::post('/plan-actions/{planAction}/validate', [PlanActionController::class, 'validatePlan'])->name('plan_actions.validate');
-
-    // Validation des recommandations (ancien contrôleur)
-    Route::get('/validation', [ValidationController::class, 'index'])->name('validation.index');
-    Route::get('/validation/{recommandation}', [ValidationController::class, 'show'])->name('validation.show');
-    Route::post('/validation/{recommandation}/valider', [ValidationController::class, 'valider'])->name('validation.valider');
-    Route::post('/validation/{recommandation}/rejeter', [ValidationController::class, 'rejeter'])->name('validation.rejeter');
-
-    // Validation par structure (nouveau contrôleur)
-    Route::prefix('validation-recommandations')->name('validation_recommandations.')->group(function () {
-        Route::get('/', [ValidationRecommandationController::class, 'index'])->name('index');
-        Route::get('/{recommandation}/dossier', [ValidationRecommandationController::class, 'dossier'])->name('dossier');
-        Route::post('/{recommandation}/valider', [ValidationRecommandationController::class, 'valider'])->name('valider');
-        Route::post('/{recommandation}/rejeter', [ValidationRecommandationController::class, 'rejeter'])->name('rejeter');
+    // Recommandations (Validation initiale)
+    Route::prefix('recommandations')->name('recommandations.')->group(function () {
+        Route::get('/', [RecommandationController::class, 'index'])->name('index');
+        Route::get('/{recommandation}', [RecommandationController::class, 'show'])->name('show');
+        Route::post('/{recommandation}/valider', [RecommandationController::class, 'valider'])->name('valider');
+        Route::post('/{recommandation}/rejeter', [RecommandationController::class, 'rejeter'])->name('rejeter');
     });
 
-    // Autres routes
-    Route::get('/recommandations', [ValidationController::class, 'recommandations'])->name('recommandations.index');
-    Route::get('/suivi', [DashboardController::class, 'suivi'])->name('suivi.index');
-    Route::get('/suivi/{recommandation}', [DashboardController::class, 'showSuivi'])->name('suivi.show');
-    
+    // Validation des Plans d'action (Dossiers)
+    Route::prefix('plan-actions')->name('plan_actions.')->group(function () {
+        Route::get('/', [PlanActionController::class, 'index'])->name('index');
+        Route::get('/{planAction}', [PlanActionController::class, 'show'])->name('show');
+        Route::post('/{planAction}/validate', [PlanActionController::class, 'validatePlan'])->name('validate');
+        
+        // Dossier consolidé
+        Route::get('/recommandation/{recommandation}/dossier', [PlanActionController::class, 'dossier'])->name('recommandation_dossier');
+        Route::post('/recommandation/{recommandation}/valider', [PlanActionController::class, 'validerDossier'])->name('recommandation_valider');
+        Route::post('/recommandation/{recommandation}/rejeter', [PlanActionController::class, 'rejeterDossier'])->name('recommandation_rejeter');
+    });
+
+    // Suivi Global
+    Route::prefix('suivi')->name('suivi.')->group(function () {
+        Route::get('/', [SuiviController::class, 'index'])->name('index');
+        Route::get('/{recommandation}', [SuiviController::class, 'show'])->name('show');
+    });
+
     // Rapports
-    Route::get('/rapports', [App\Http\Controllers\PointFocal\RapportController::class, 'index'])->name('rapports.index');
-    Route::get('/rapports/{rapport}', [App\Http\Controllers\PointFocal\RapportController::class, 'show'])->name('rapports.show');
+    Route::prefix('rapports')->name('rapports.')->group(function () {
+        Route::get('/', [RapportController::class, 'index'])->name('index');
+        Route::get('/{rapport}', [RapportController::class, 'show'])->name('show');
+    });
 });
