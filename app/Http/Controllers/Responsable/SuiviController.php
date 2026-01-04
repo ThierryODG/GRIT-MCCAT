@@ -68,7 +68,7 @@ class SuiviController extends Controller
             'its:id,name',
             'inspecteurGeneral:id,name',
             'pointFocal:id,name,telephone',
-            'plansAction'
+            'plansAction.preuvesExecution'
         ]);
 
         // Calcul progression

@@ -38,32 +38,30 @@
                     <div>
                         <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type de rapport <span
                                 class="text-red-500">*</span></label>
-                        <select name="type" id="type" required
-                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
-                            <option value="execution">Rapport d'exécution</option>
-                            <option value="global">Rapport global</option>
+                        <select name="type" id="type" required readonly
+                            class="w-full rounded-lg border-gray-300 bg-gray-100 cursor-not-allowed shadow-sm">
+                            <option value="execution" selected>Rapport d'exécution (Individuel)</option>
+                            <!-- Global report temporarily disabled -->
                         </select>
-                        @error('type')
-                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                        @enderror
+                        <p class="text-xs text-gray-500 mt-1">Pour le moment, seul le rapport d'exécution par recommandation est disponible.</p>
                     </div>
 
-                    <!-- Recommandation (Optionnel) -->
+                    <!-- Recommandation (Obligatoire pour rapport d'exécution) -->
                     <div>
                         <label for="recommandation_id" class="block text-sm font-medium text-gray-700 mb-1">Lier à une
-                            recommandation (Optionnel)</label>
-                        <select name="recommandation_id" id="recommandation_id"
+                            recommandation <span class="text-red-500">*</span></label>
+                        <select name="recommandation_id" id="recommandation_id" required
                             class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
-                            <option value="">-- Aucune (Rapport général) --</option>
+                            <option value="">-- Sélectionnez une recommandation --</option>
                             @foreach($recommandations as $recommandation)
                                 <option value="{{ $recommandation->id }}">
-                                    #{{ $recommandation->id }} -
-                                    {{ Str::limit($recommandation->titre ?? $recommandation->recommandation, 50) }}
+                                    {{ $recommandation->reference }} -
+                                    {{ Str::limit($recommandation->titre, 60) }}
                                 </option>
                             @endforeach
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">Sélectionnez une recommandation pour pré-remplir les données.
-                        </p>
+                        <p class="text-xs text-gray-500 mt-1">Le rapport affichera l'état d'avancement de cette
+                            recommandation.</p>
                     </div>
 
                     <!-- Description / Contenu supplémentaire -->

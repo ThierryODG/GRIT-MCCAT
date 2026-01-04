@@ -17,6 +17,9 @@ Route::prefix('admin')->middleware(['auth',/*'admin'*/])->name('admin.')->group(
     Route::resource('users', UserController::class)->except(['create', 'edit']);
     Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
 
+    // ==================== GESTION STRUCTURES ====================
+    Route::resource('structures', \App\Http\Controllers\Admin\StructureController::class);
+
     // ==================== GESTION RÔLES & PERMISSIONS ====================
     Route::prefix('roles')->name('roles.')->group(function () {
         // CRUD complet

@@ -1,0 +1,106 @@
+@startuml class_diagram
+
+skinparam classAttributeIconSize 0
+skinparam monochrome true
+skinparam shadowing false
+skinparam linetype ortho
+
+class Utilisateur {
+    +id: integer
+    +nom: string
+    +email: string
+    +mot_de_passe: string
+    +role: string
+    +structure_id: integer
+    --
+    +se_connecter()
+    +deconnecter()
+}
+
+class Administrateur {
+    --
+    +creer_utilisateur()
+    +modifier_permission()
+}
+
+class ITS {
+    --
+    +saisir_recommandation()
+    +consulter_statuts()
+}
+
+class InspecteurGeneral {
+    --
+    +valider_recommandation()
+    +rejeter_recommandation()
+}
+
+class PointFocal {
+    --
+    +mettre_a_jour_avancement()
+    +ajouter_commentaire()
+}
+
+class Responsable {
+    --
+    +valider_plan_action()
+    +choisir_point_focal()
+}
+
+Utilisateur <|-- Administrateur
+Utilisateur <|-- ITS
+Utilisateur <|-- InspecteurGeneral
+Utilisateur <|-- PointFocal
+Utilisateur <|-- Responsable
+
+class Recommandation {
+    +id: integer
+    +reference: string
+    +description: text
+    +date_creation: datetime
+    +statut: string
+    --
+    +creer()
+    +modifier()
+    +changer_statut()
+}
+
+class PlanAction {
+    +id: integer
+    +action: text
+    +indicateurs: text
+    +incidence_financiere: decimal
+    +date_debut_prevue: date
+    +date_fin_prevue: date
+    --
+    +elaborer()
+    +valider()
+}
+
+class Notification {
+    +id: integer
+    +type: string
+    +contenu: text
+    +date_envoi: datetime
+    +statut: string
+    --
+    +envoyer()
+}
+
+class Rapport {
+    +id: integer
+    +type: string
+    +periode: string
+    +date_generation: datetime
+    --
+    +generer()
+    +exporter()
+}
+
+Utilisateur "1" --> "many" Recommandation
+Recommandation "1" *-- "many" PlanAction
+Recommandation "1" --> "many" Notification
+Utilisateur "1" --> "many" Rapport
+Recommandation "many" -- "1" Rapport
+
+@enduml

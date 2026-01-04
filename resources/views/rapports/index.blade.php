@@ -21,7 +21,7 @@
             </div>
         @endif
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="flex flex-col gap-6">
             @forelse($rapportsParAnnee as $annee => $rapports)
                 <!-- Folder Card for Year -->
                 <div x-data="{ open: true }" class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
@@ -53,10 +53,21 @@
                                 </div>
                                 <div class="flex-shrink-0">
                                     @if(Auth::user()->isPointFocal())
-                                        <a href="{{ route('point_focal.rapports.show', $rapport) }}"
-                                            class="text-gray-400 hover:text-blue-600 p-2" title="Télécharger">
-                                            <i class="fas fa-download"></i>
-                                        </a>
+                                        <div class="flex items-center">
+                                            <a href="{{ route('point_focal.rapports.show', $rapport) }}"
+                                                class="text-gray-400 hover:text-blue-600 p-2" title="Télécharger">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                            @if($rapport->user_id === Auth::id())
+                                                <form action="{{ route('point_focal.rapports.destroy', $rapport) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer ce rapport ?');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" class="text-gray-400 hover:text-red-600 p-2" title="Supprimer">
+                                                        <i class="fas fa-trash-alt"></i>
+                                                    </button>
+                                                </form>
+                                            @endif
+                                        </div>
                                     @elseif(Auth::user()->isITS())
                                         <a href="{{ route('its.rapports.show', $rapport) }}"
                                             class="text-gray-400 hover:text-blue-600 p-2" title="Télécharger">

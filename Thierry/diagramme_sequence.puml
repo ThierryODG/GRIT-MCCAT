@@ -1,0 +1,71 @@
+@startuml
+skinparam style strictuml
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 20
+skinparam ResponseMessageBelowArrow true
+
+title Processus de Création et Soumission d'une Recommandation
+
+actor "ITS (Auditeur)" as ITS
+participant "Interface Web\n(Vue)" as View
+control "RecommandationController" as Controller
+entity "Recommandation" as Model
+database "Base de Données" as DB
+participant "Système de Notification" as Notif
+actor "Inspecteur Général\n(IG)" as IG
+
+== Création du Brouillon ==
+ITS -> View : Remplir le formulaire de recommandation\n(Titre, Priorité, Structure, etc.)
+activate View
+View -> Controller : POST /recommandations (store)
+activate Controller
+
+Controller -> Controller : Valider les données (Request)
+Controller -> Model : create(data)
+activate Model
+Model -> DB : INSERT INTO recommandations...
+activate DB
+DB --> Model : ID de la recommandation
+deactivate DB
+Model --> Controller : Instance Recommandation (Statut: brouillon)
+deactivate Model
+
+Controller -> View : Redirection avec message de succès
+deactivate Controller
+View --> ITS : Affiche "Recommandation créée en brouillon"
+deactivate View
+
+== Soumission à l'Inspecteur Général ==
+ITS -> View : Cliquer sur "Soumettre à l'IG"
+activate View
+View -> Controller : POST /recommandations/{id}/soumettre
+activate Controller
+
+Controller -> Model : find(id)
+activate Model
+Model -> DB : SELECT * FROM recommandations...
+activate DB
+DB --> Model : Données Recommandation
+deactivate DB
+Model --> Controller : Instance
+deactivate Model
+
+Controller -> Controller : Vérifier droits & statut (brouillon)
+
+Controller -> Model : update(['statut' => 'soumise_ig'])
+activate Model
+Model -> DB : UPDATE recommandations SET statut = 'soumise_ig'...
+deactivate Model
+
+Controller -> Notif : send(new RecommandationSoumise)
+activate Notif
+Notif -> DB : Insérer Notification (DatabaseChannel)
+Notif --> IG : Envoyer Email (MailChannel)
+deactivate Notif
+
+Controller -> View : Redirection avec succès
+deactivate Controller
+View --> ITS : Affiche "Recommandation soumise avec succès"
+deactivate View
+
+@enduml

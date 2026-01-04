@@ -1,0 +1,90 @@
+@startuml use_case_diagram
+
+left to right direction
+skinparam monochrome true
+skinparam shadowing false
+
+actor "Administrateur" as Admin
+actor "Responsable" as RESP
+actor "Cabinet du Ministre" as CAB
+actor "Point Focal" as PF
+actor "Inspecteur Général" as IG
+actor "ITS" as ITS
+actor "Système de notification" as NoteSys
+
+rectangle "Système de gestion des recommandations des ITS" {
+    ' Auth
+    (S'authentifier) as UC_AUTH
+    
+    ' Common
+    (Consulter les rapports) as UC_REPORTS
+    (Ajouter un commentaire) as UC_COMMENT
+    
+    ' PF
+    (Etablir plan d'action) as UC_PF_PLAN
+    (Mettre à jour le status) as UC_PF_STATUS
+    
+    ' Admin
+    (Gérer les permissions) as UC_ADMIN_PERM
+    (Gérer les rapports) as UC_ADMIN_REP
+    (Gérer les utilisateurs) as UC_ADMIN_USERR
+    
+    ' IG
+    (Valider une recommandation) as UC_IG_VAL_REC
+    (Rejeter une recommandation) as UC_IG_REJ_REC
+    (consulter les recommandations) as UC_IG_CONSULT
+    
+    ' ITS
+    (Saisir une recommandation) as UC_ITS_SAISIR
+    (Modifier une recommandation) as UC_ITS_MODIF
+    (Supprimer une recommandation) as UC_ITS_SUPPR
+    
+    ' RESP
+    (Valider le plan d'action) as UC_RESP_VAL
+    (Rejeter le plan d'action) as UC_RESP_REJ
+    (Choisir un Point Focal) as UC_RESP_PF
+    
+    ' Notifications
+    (Envoyer des notifications) as UC_NOTIF
+}
+
+PF --> UC_PF_STATUS
+PF --> UC_PF_PLAN
+PF --> UC_COMMENT
+PF --> UC_AUTH
+
+CAB --> UC_AUTH
+CAB --> UC_REPORTS
+
+RESP --> UC_AUTH
+RESP --> UC_RESP_VAL
+RESP --> UC_RESP_REJ
+RESP --> UC_RESP_PF
+
+Admin --> UC_AUTH
+Admin --> UC_ADMIN_PERM
+Admin --> UC_ADMIN_REP
+Admin --> UC_ADMIN_USERR
+
+IG --> UC_AUTH
+IG --> UC_IG_VAL_REC
+IG --> UC_IG_REJ_REC
+IG --> UC_IG_CONSULT
+
+ITS --> UC_AUTH
+ITS --> UC_REPORTS
+ITS --> UC_ITS_SAISIR
+ITS --> UC_ITS_MODIF
+ITS --> UC_ITS_SUPPR
+ITS --> UC_IG_CONSULT
+
+NoteSys <-- UC_NOTIF
+
+UC_PF_STATUS ..> UC_NOTIF : <<include>>
+UC_PF_PLAN ..> UC_NOTIF : <<include>>
+UC_IG_VAL_REC ..> UC_NOTIF : <<include>>
+UC_IG_REJ_REC ..> UC_NOTIF : <<include>>
+UC_ITS_SAISIR ..> UC_NOTIF : <<include>>
+UC_ITS_MODIF ..> UC_NOTIF : <<include>>
+
+@enduml

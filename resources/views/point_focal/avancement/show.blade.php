@@ -23,6 +23,18 @@
                 </div>
             </div>
             <div class="flex items-center gap-4">
+                <!-- Bouton Générer Rapport -->
+                <a href="{{ route('point_focal.avancement.download_report', $recommandation) }}"
+                    class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-100 transition-colors shadow-sm"
+                    target="_blank">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Générer Rapport
+                </a>
+
                 <div class="text-right">
                     <span class="block text-sm text-gray-500">Progression Globale</span>
                     <span class="text-xl font-bold text-blue-600" x-text="globalProgress + '%'"></span>
@@ -180,19 +192,64 @@
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-1">Commentaire
                                         d'exécution</label>
-                                    <textarea x-model="action.commentaire_avancement" rows="4"
+                                    <textarea x-model="action.commentaire_avancement" rows="3"
                                         class="w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                         placeholder="Décrivez les actions réalisées..."></textarea>
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Preuve d'exécution
+                                        (Optionnel)</label>
+                                    <input type="file" @change="action.preview_files = $event.target.files" multiple
+                                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                                    <p class="text-xs text-gray-500 mt-1">Formats acceptés: PDF, Images, Office. Max 10Mo.
+                                    </p>
+
+                                    <!-- Liste des preuves existantes -->
+                                    <template x-if="action.preuves_execution && action.preuves_execution.length > 0">
+                                        <div class="mt-2 space-y-2">
+                                            <p class="text-xs font-semibold text-gray-600">Preuves jointes :</p>
+                                            <ul class="text-sm space-y-1">
+                                                <template x-for="preuve in action.preuves_execution" :key="preuve.id">
+                                                    <li
+                                                        class="flex items-center justify-between bg-blue-50 p-2 rounded text-blue-600 group">
+                                                        <div class="flex items-center overflow-hidden">
+                                                            <svg class="w-4 h-4 mr-2 flex-shrink-0" fill="none"
+                                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13">
+                                                                </path>
+                                                            </svg>
+                                                            <a :href="'/point-focal/avancement/preuve/' + preuve.id + '/download'"
+                                                                target="_blank" class="hover:underline truncate"
+                                                                :title="preuve.file_name" x-text="preuve.file_name"></a>
+                                                        </div>
+                                                        <button @click="deletePreuve(preuve.id, index)" type="button"
+                                                            class="text-red-400 hover:text-red-600 ml-2" title="Supprimer">
+                                                            <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                                                viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                                    stroke-width="2"
+                                                                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                                                </path>
+                                                            </svg>
+                                                        </button>
+                                                    </li>
+                                                </template>
+                                            </ul>
+                                        </div>
+                                    </template>
                                 </div>
 
                                 <div class="flex items-center justify-between pt-4">
                                     <div class="flex items-center gap-4">
                                         <span class="text-sm text-gray-600">Statut actuel :</span>
                                         <span class="px-3 py-1 rounded-full text-sm font-medium" :class="{
-                                                                            'bg-green-100 text-green-800': action.statut_execution === 'termine',
-                                                                            'bg-orange-100 text-orange-800': action.statut_execution === 'en_cours',
-                                                                            'bg-gray-100 text-gray-800': !action.statut_execution || action.statut_execution === 'non_demarre'
-                                                                        }"
+                                                                                                'bg-green-100 text-green-800': action.statut_execution === 'termine',
+                                                                                                'bg-orange-100 text-orange-800': action.statut_execution === 'en_cours',
+                                                                                                'bg-gray-100 text-gray-800': !action.statut_execution || action.statut_execution === 'non_demarre'
+                                                                                            }"
                                             x-text="formatStatus(action.statut_execution)"></span>
                                     </div>
 
@@ -244,44 +301,81 @@
 
                 async updateAction(index, status) {
                     const action = this.actions[index];
+                    const formData = new FormData();
+                    formData.append('statut_execution', status);
+                    formData.append('commentaire_avancement', action.commentaire_avancement || '');
+
+                    if (action.preview_files) {
+                        for (let i = 0; i < action.preview_files.length; i++) {
+                            formData.append('preuves[]', action.preview_files[i]);
+                        }
+                    }
+
+                    // Method PUT via FormData is tricky
+                    formData.append('_method', 'PUT');
 
                     try {
                         const response = await fetch(`/point-focal/avancement/action/${action.id}`, {
-                            method: 'PUT',
+                            method: 'POST',
                             headers: {
-                                'Content-Type': 'application/json',
                                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
                                 'Accept': 'application/json'
                             },
-                            body: JSON.stringify({
-                                statut_execution: status,
-                                commentaire_avancement: action.commentaire_avancement
-                            })
+                            body: formData
                         });
 
                         const data = await response.json();
 
+                        if (!response.ok) {
+                            if (response.status === 422 && data.errors && data.errors.statut_execution) {
+                                alert(data.errors.statut_execution[0]); // Affiche l'erreur "Impossible de terminer..."
+                            } else {
+                                alert('Erreur de validation. Vérifiez les données.');
+                            }
+                            return; // Stop execution
+                        }
+
                         if (data.success) {
-                            // Update local state
                             this.actions[index].statut_execution = status;
                             this.globalProgress = data.global_progress;
+                            // Reset file input for this action if possible, or just clear preview_files model
+                            this.actions[index].preview_files = null;
 
-                            // Mettre à jour toutes les actions si le serveur a renvoyé des réajustements
                             if (data.updated_actions) {
                                 this.actions = data.updated_actions;
-                            }
-
-                            // Optional: Show notification
-                            // alert('Mise à jour effectuée');
-
-                            // If marked as done, maybe move to next step?
-                            if (status === 'termine' && index < this.actions.length - 1) {
-                                // this.currentStep++; 
                             }
                         }
                     } catch (error) {
                         console.error('Erreur:', error);
                         alert('Une erreur est survenue lors de la mise à jour.');
+                    }
+                },
+
+                async deletePreuve(preuveId, actionIndex) {
+                    if (!confirm('Voulez-vous vraiment supprimer cette preuve ?')) return;
+
+                    try {
+                        const response = await fetch(`/point-focal/avancement/preuve/${preuveId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                                'Accept': 'application/json'
+                            }
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            // Upate local state by removing the proof from the list
+                            // We need to refresh the action or manually remove it from the array
+                            // Simplest is to filter it out
+                            this.actions[actionIndex].preuves_execution = this.actions[actionIndex].preuves_execution.filter(p => p.id !== preuveId);
+                        } else {
+                            alert(data.error || 'Erreur lors de la suppression.');
+                        }
+                    } catch (error) {
+                        console.error('Erreur:', error);
+                        alert('Une erreur est survenue.');
                     }
                 }
             }

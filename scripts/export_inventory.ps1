@@ -29,7 +29,7 @@ if (Test-Path "$root\composer.json") {
 Get-ChildItem -Path "$root\database\migrations" -Filter "*.php" | Select-Object FullName | ConvertTo-Json | Out-File "$root\storage\app\diagnostic_migrations.json"
 
 # 6) Créer un zip minimal
-$zipPath = "$root\storage\app\grit_diagnostic_$(Get-Date -Format yyyyMMddHHmmss).zip"
+$zipPath = "$root\storage\app\sigr-its_diagnostic_$(Get-Date -Format yyyyMMddHHmmss).zip"
 Compress-Archive -Path "$root\storage\app\diagnostic_*.json","$root\composer.json" -DestinationPath $zipPath -Force
 
 Write-Host "Inventaire généré : $zipPath"

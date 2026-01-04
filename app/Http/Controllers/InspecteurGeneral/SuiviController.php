@@ -46,7 +46,7 @@ class SuiviController extends Controller
             abort(403);
         }
 
-        $recommandation->load(['plansAction', 'pointFocal', 'structure', 'its']);
+        $recommandation->load(['plansAction.preuvesExecution', 'pointFocal', 'structure', 'its']);
 
         // Calcul progression
         $totalActions = $recommandation->plansAction->count();

@@ -85,11 +85,17 @@ class PlanActionController extends Controller
 
         $validated = $request->validate([
             'action' => 'required|string|max:1000',
+            'executant_type' => 'required|in:self,other',
+            'executant_nom' => 'nullable|required_if:executant_type,other|string|max:255',
+            'executant_role' => 'nullable|string|max:255',
         ]);
 
         // Création du plan d'action (seulement action + workflow/execution)
         $planAction = new PlanAction([
             'action' => $validated['action'],
+            'executant_type' => $validated['executant_type'],
+            'executant_nom' => $validated['executant_type'] === 'other' ? $validated['executant_nom'] : Auth::user()->name,
+            'executant_role' => $validated['executant_role'],
         ]);
         $planAction->recommandation_id = $recommandation->id;
         $planAction->point_focal_id = Auth::id();
@@ -159,11 +165,19 @@ class PlanActionController extends Controller
 
         $validated = $request->validate([
             'action' => 'required|string|max:1000',
+            'executant_type' => 'required|in:self,other',
+            'executant_nom' => 'nullable|required_if:executant_type,other|string|max:255',
+            'executant_role' => 'nullable|string|max:255',
         ]);
 
         // Si le plan avait un motif de rejet précédent, on le nettoie et on efface le motif global de la recommandation
         // Toujours appliquer la modification
-        $planAction->update(['action' => $validated['action']]);
+        $planAction->update([
+            'action' => $validated['action'],
+            'executant_type' => $validated['executant_type'],
+            'executant_nom' => $validated['executant_type'] === 'other' ? $validated['executant_nom'] : Auth::user()->name,
+            'executant_role' => $validated['executant_role'],
+        ]);
 
         // Quand le Point Focal modifie un plan (quel que soit le motif précédent),
         // on considère qu'il corrige la recommandation :

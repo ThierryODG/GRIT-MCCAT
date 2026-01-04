@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>GRIT - Suivi des Recommandations ITS</title>
+    <title>SIGR-ITS - Suivi des Recommandations ITS</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -15,6 +16,7 @@
     <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
+
 <body class="min-h-screen bg-gradient-to-br from-blue-900 to-purple-800">
     <div class="min-h-screen flex items-center justify-center p-6">
         <div class="max-w-6xl w-full">
@@ -27,7 +29,7 @@
                     </div>
                 </div>
                 <h1 class="text-6xl font-bold text-white mb-4">
-                    GRIT
+                    SIGR-ITS
                 </h1>
                 <p class="text-2xl text-blue-100 mb-3">
                     Plateforme de Suivi des Recommandations ITS
@@ -61,7 +63,7 @@
                     ])
 
                     <!-- Inspecteur Card -->
-                    @include('welcome.role-card', [
+                     @include('welcome.role-card', [
                         'icon' => 'check-circle',
                         'color' => 'yellow',
                         'title' => 'Inspecteur Général',
@@ -75,6 +77,7 @@
                 <p class="text-white text-xl mb-8 font-semibold">
                     Accédez à votre espace de travail
                 </p>
+
                 <a href="{{ route('login') }}"
                    class="bg-white text-blue-700 px-10 py-4 rounded-2xl font-bold text-lg hover:bg-gray-100 transition-all duration-300 inline-flex items-center shadow-2xl hover:scale-105">
                     <i class="fas fa-sign-in-alt mr-3"></i>

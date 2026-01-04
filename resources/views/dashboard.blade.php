@@ -13,7 +13,8 @@
                         <div class="p-6 rounded-lg bg-blue-50">
                             <h3 class="mb-2 text-lg font-semibold">Utilisateurs</h3>
                             <p class="text-3xl font-bold">{{ \App\Models\User::count() }}</p>
-                            {{-- <a href="{{ route('admin.users.index') }}" class="inline-block mt-2 text-blue-600 hover:text-blue-800">Gérer →</a> --}}
+                            {{-- <a href="{{ route('admin.users.index') }}"
+                                class="inline-block mt-2 text-blue-600 hover:text-blue-800">Gérer →</a> --}}
                         </div>
 
                         <div class="p-6 rounded-lg bg-green-50">
@@ -24,7 +25,7 @@
 
                         <div class="p-6 rounded-lg bg-purple-50">
                             <h3 class="mb-2 text-lg font-semibold">Système</h3>
-                            <p class="text-lg">GRIT - Suivi ITS</p>
+                            <p class="text-lg">SIGR-ITS - Suivi ITS</p>
                             <span class="text-gray-600">Version 1.0</span>
                         </div>
                     </div>

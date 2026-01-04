@@ -72,18 +72,36 @@ class RecommandationController extends Controller
             'structure_id' => 'required|exists:structures,id',
             'priorite' => 'required|in:haute,moyenne,basse',
             'date_limite' => 'required|date|after:today',
+            'documents.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240', // 10MB max
+            'documents_descriptions.*' => 'nullable|string|max:255',
         ]);
 
         // La référence sera générée automatiquement par le modèle
         $recommandation = Recommandation::create([
             'titre' => $validated['titre'],
             'description' => $validated['description'],
-            'structure_id' => $validated['structure_id'], // ✅ CORRECTION ICI
+            'structure_id' => $validated['structure_id'],
             'priorite' => $validated['priorite'],
             'date_limite' => $validated['date_limite'],
             'its_id' => Auth::id(),
             'statut' => 'brouillon',
         ]);
+
+        // Gestion des documents
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $index => $file) {
+                $path = $file->store('recommandations/documents', 'public');
+                $originalName = $file->getClientOriginalName();
+                $description = $request->documents_descriptions[$index] ?? $originalName;
+
+                \App\Models\RecommandationDocument::create([
+                    'recommandation_id' => $recommandation->id,
+                    'file_path' => $path,
+                    'file_name' => $originalName,
+                    'description' => $description,
+                ]);
+            }
+        }
 
         return redirect()->route('its.recommandations.show', $recommandation)
             ->with('success', 'Recommandation créée en brouillon. Vous pouvez la soumettre à l\'IG.');
@@ -122,11 +140,12 @@ class RecommandationController extends Controller
         }
 
         $recommandation->load([
-            'structure', // ✅ AJOUTER ICI
+            'structure',
             'inspecteurGeneral:id,name',
             'responsable:id,name',
             'pointFocal:id,name,telephone',
-            'plansAction'
+            'plansAction',
+            'documents' // ✅ Eager load documents
         ]);
 
         return view('its.recommandations.show', compact('recommandation'));
@@ -261,7 +280,7 @@ class RecommandationController extends Controller
             abort(403, 'Action non autorisée.');
         }
 
-        $recommandation->load(['plansAction', 'pointFocal']);
+        $recommandation->load(['plansAction.preuvesExecution', 'pointFocal']);
 
         // Calcul de la progression globale
         $totalActions = $recommandation->plansAction->count();

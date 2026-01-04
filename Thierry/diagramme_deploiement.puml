@@ -1,0 +1,42 @@
+@startuml
+skinparam nodesep 50
+skinparam ranksep 50
+
+title Diagramme de Déploiement - Architecture GRIT
+
+node "Poste Client (Utilisateur)" as ClientPC {
+    component "Navigateur Web\n(Chrome, Firefox, Edge)" as Browser
+}
+
+node "Serveur d'Application (Serveur Web)" as AppServer {
+    component "Serveur Web\n(Apache / Nginx)" as WebServer
+    component "PHP Runtime\n(PHP 8.2+)" as PHP {
+        artifact "Application Laravel\n(GRIT Source Code)" as AppCode
+    }
+    
+    WebServer ..> PHP : FastCGI / Module PHP
+}
+
+node "Serveur de Données" as DBServer {
+    database "SGBD PostgreSQL" as Postgres {
+        folder "Base de Données GRIT" as DB
+    }
+}
+
+node "Services Externes" as External {
+    component "Serveur SMTP\n(Mailgun / SMTP Relais)" as MailServer
+}
+
+Browser -- WebServer : HTTPS (Port 443)\nRequêtes HTTP / JSON
+PHP -- Postgres : TCP/IP (Port 5432)\nPDO Driver
+PHP ..> MailServer : SMTP / API\nNotifications Email
+
+note right of AppCode
+  Contient:
+  - Modèles (Eloquent)
+  - Contrôleurs
+  - Vues (Blade)
+  - Assets (CSS/JS compilés)
+end note
+
+@enduml

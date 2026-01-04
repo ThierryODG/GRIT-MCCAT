@@ -7,6 +7,7 @@ use App\Models\PlanAction;
 use App\Models\Recommandation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class AvancementController extends Controller
 {
@@ -57,7 +58,7 @@ class AvancementController extends Controller
              // Pour l'instant on laisse l'accès mais on bloquera les modifs dans la vue si nécessaire
         }
 
-        $recommandation->load('plansAction');
+        $recommandation->load(['plansAction.preuvesExecution']);
         
         // Calcul de la progression globale
         $totalActions = $recommandation->plansAction->count();
@@ -80,7 +81,36 @@ class AvancementController extends Controller
         $validated = $request->validate([
             'statut_execution' => 'required|in:non_demarre,en_cours,termine',
             'commentaire_avancement' => 'nullable|string|max:1000',
+            'preuves.*' => 'nullable|file|mimes:pdf,jpg,jpeg,png,doc,docx,xls,xlsx|max:10240', // 10MB max
+            'preuves_descriptions.*' => 'nullable|string|max:255',
         ]);
+
+        // Validation supplémentaire : Si on termine l'action, vérifier qu'il y a des preuves
+        if ($validated['statut_execution'] === 'termine') {
+            $hasExistingProofs = $planAction->preuvesExecution()->exists();
+            $hasNewProofs = $request->hasFile('preuves');
+
+            if (!$hasExistingProofs && !$hasNewProofs) {
+                return response()->json([
+                    'errors' => ['statut_execution' => ['Impossible de terminer l\'action sans joindre au moins une preuve (document, photo, etc.).']]
+                ], 422);
+            }
+        }
+
+        // Gestion des preuves d'exécution
+        if ($request->hasFile('preuves')) {
+            foreach ($request->file('preuves') as $index => $file) {
+                $path = $file->store('preuves_execution', 'public');
+                $originalName = $file->getClientOriginalName();
+                
+                \App\Models\PreuveExecution::create([
+                    'plan_action_id' => $planAction->id,
+                    'file_path' => $path,
+                    'file_name' => $originalName,
+                    'description' => "Preuve jointe le " . now()->format('d/m/Y H:i'),
+                ]);
+            }
+        }
 
         // Mise à jour de l'action
         $planAction->update([
@@ -125,8 +155,72 @@ class AvancementController extends Controller
             'action_statut' => $planAction->statut_execution,
             'global_progress' => $globalProgress,
             'can_close' => $globalProgress == 100,
-            'updated_actions' => $recommandation->plansAction // Retourner les actions avec les nouvelles dates
+            'updated_actions' => $recommandation->plansAction()->with('preuvesExecution')->get() 
         ]);
+    }
+
+    /**
+     * Supprimer une preuve d'exécution
+     */
+    public function deletePreuve(\App\Models\PreuveExecution $preuve)
+    {
+        // Vérification des droits : SEUL le point focal propriétaire de l'action peut supprimer
+        if ($preuve->planAction->point_focal_id !== Auth::id()) {
+            return response()->json(['error' => 'Non autorisé'], 403);
+        }
+
+        // Suppression du fichier
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($preuve->file_path)) {
+            \Illuminate\Support\Facades\Storage::disk('public')->delete($preuve->file_path);
+        }
+
+        $preuve->delete();
+
+        return response()->json(['success' => true, 'message' => 'Preuve supprimée.']);
+    }
+
+    /**
+     * Télécharger une preuve (Accessible aux superviseurs)
+     */
+    public function downloadPreuve(\App\Models\PreuveExecution $preuve)
+    {
+        // TODO: Vérifier les permissions (ex: Point Focal, Superviseur)
+        // Pour l'instant, on laisse ouvert aux authentifiés comme demandé
+        
+        if (!Storage::disk('public')->exists($preuve->file_path)) {
+            abort(404, 'Fichier non trouvé');
+        }
+
+        return Storage::disk('public')->download($preuve->file_path, $preuve->file_name);
+    }
+
+    public function downloadReport(Recommandation $recommandation)
+    {
+        // Chargement complet des relations pour le rapport détaillé
+        $recommandation->load([
+            'structure',
+            'its', 
+            'inspecteurGeneral', 
+            'responsable', 
+            'pointFocal',
+            'plansAction.preuvesExecution',
+            'plansAction.preuvesExecution',
+            'commentaires.auteur' // Pour l'historique des échanges
+        ]);
+
+        $data = [
+            'recommandation' => $recommandation,
+            'date_generation' => now()->translatedFormat('d F Y à H:i'),
+            'auteur_generation' => Auth::user()->name,
+            'logo_path' => public_path('images/logo-mccat-300x300.jpg'),
+        ];
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('point_focal.avancement.rapport_pdf', $data);
+        
+        $pdf->setPaper('a4', 'portrait');
+        $pdf->setOptions(['isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true]);
+
+        return $pdf->download('Rapport_Execution_' . $recommandation->reference . '.pdf');
     }
 
     /**
@@ -138,7 +232,8 @@ class AvancementController extends Controller
             abort(403);
         }
 
-        // Vérifier que tout est terminé
+        // Vérifier que tout est terminé et que chaque action terminée a une preuve (Optionnel selon règle de gestion)
+        // Pour l'instant on vérifie juste le statut.
         $totalActions = $recommandation->plansAction()->count();
         $completedActions = $recommandation->plansAction()->where('statut_execution', 'termine')->count();
         

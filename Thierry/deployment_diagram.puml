@@ -1,0 +1,35 @@
+@startuml deployment_diagram
+
+skinparam monochrome true
+skinparam shadowing false
+
+node "Navigateur (Utilisateur)" {
+    [Navigateur Web] as browser
+}
+
+node "Serveur d'Application (Laravel)" {
+    package "Réseau Public" {
+        [Serveur Web (Nginx)] as nginx
+    }
+    
+    package "Couche Applicative" {
+        [PHP-FPM] as php
+        [Framework Laravel] as laravel
+    }
+}
+
+node "Serveur de Base de Données" {
+    database "MySQL" as db
+}
+
+node "Stockage / Cloud" {
+    folder "Dossier Storage (Rapports, Preuves)" as storage
+}
+
+browser -- nginx : HTTP / HTTPS
+nginx -- php : FastCGI
+php -- laravel : Exécution
+laravel -- db : Connexion SQL
+laravel -- storage : Système de fichiers
+
+@enduml

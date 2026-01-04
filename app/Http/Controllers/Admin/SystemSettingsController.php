@@ -17,8 +17,11 @@ class SystemSettingsController extends Controller
     {
         $systemInfo = $this->getSystemInfo();
         $appSettings = $this->getAppSettings();
+        
+        // Fetch Business Settings
+        $businessSettings = DB::table('settings')->pluck('value', 'key')->all();
 
-        return view('admin.settings.index', compact('systemInfo', 'appSettings'));
+        return view('admin.settings.index', compact('systemInfo', 'appSettings', 'businessSettings'));
     }
 
     /**
@@ -26,6 +29,11 @@ class SystemSettingsController extends Controller
      */
     public function update(Request $request)
     {
+        // Check if we are updating business settings
+        if ($request->has('setting_type') && $request->setting_type === 'business') {
+            return $this->updateBusinessSettings($request);
+        }
+
         $validated = $request->validate([
             'app_name' => 'required|string|max:255',
             'app_env' => 'required|in:local,production,staging',
@@ -39,12 +47,34 @@ class SystemSettingsController extends Controller
             $this->updateEnvFile($validated);
 
             return redirect()->route('admin.settings.index')
-                ->with('success', 'Paramètres mis à jour avec succès. Un redémarrage peut être nécessaire.');
+                ->with('success', 'Paramètres système mis à jour avec succès. Un redémarrage peut être nécessaire.');
 
         } catch (\Exception $e) {
             return redirect()->route('admin.settings.index')
                 ->with('error', 'Erreur lors de la mise à jour: ' . $e->getMessage());
         }
+    }
+
+    private function updateBusinessSettings(Request $request)
+    {
+        $validated = $request->validate([
+            'alert_deadline_1_days' => 'required|integer|min:1',
+            'alert_deadline_2_days' => 'required|integer|min:1|lt:alert_deadline_1_days',
+            'default_deadline_months' => 'required|integer|min:1',
+        ]);
+
+        foreach ($validated as $key => $value) {
+            DB::table('settings')->updateOrInsert(
+                ['key' => $key],
+                ['value' => $value, 'updated_at' => now()]
+            );
+        }
+
+        // Clear config cache to ensure new settings are picked up if we cache them
+        Cache::forget('business_settings');
+
+        return redirect()->route('admin.settings.index')
+            ->with('success', 'Paramètres métier mis à jour avec succès.');
     }
 
     /**

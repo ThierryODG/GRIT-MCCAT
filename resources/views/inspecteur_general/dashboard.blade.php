@@ -19,7 +19,7 @@
     <div class="space-y-10 py-6 bg-[#f8fafc]">
 
         <!-- Hero Header for IG -->
-        <div class="relative overflow-hidden p-8 rounded-[2.5rem] bg-[#1e293b] shadow-2xl">
+        <div class="relative overflow-hidden p-8 rounded-[1.5rem] bg-[#020565] shadow-2xl">
             <div class="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
                 <div>
                     <h1 class="text-3xl font-black text-white tracking-tight">Supervision Générale</h1>
@@ -27,12 +27,23 @@
                         <span class="text-orange-400 font-bold">{{ $statsRecommandations['en_attente_validation'] }}</span>
                         recommandations en attente de décision.</p>
                 </div>
+                <!-- Mini Calendar or Info Card -->
+                <div
+                        class="flex items-center space-x-3 bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/20">
+                        <div class="w-10 h-10 rounded-full bg-indigo-400/30 flex items-center justify-center">
+                            <i class="fas fa-calendar-alt text-white"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs text-indigo-100 uppercase tracking-wider font-semibold">Date d'aujourd'hui</p>
+                            <p class="text-sm font-bold text-white">{{ now()->translatedFormat('d F Y') }}</p>
+                        </div>
+                    </div>
                 <div class="flex -space-x-3">
                     <div
-                        class="w-12 h-12 rounded-full border-4 border-[#1e293b] bg-indigo-500 flex items-center justify-center text-white font-bold">
+                        class="w-12 h-12 rounded-full border-4 border-[#ffffff] bg-red-500 flex items-center justify-center text-white font-bold">
                         IG</div>
                     <div
-                        class="w-12 h-12 rounded-full border-4 border-[#1e293b] bg-slate-700 flex items-center justify-center text-white/50">
+                        class="w-12 h-12 rounded-full border-4 border-[#ffffff] bg-green-700 flex items-center justify-center text-white/50">
                         <i class="fas fa-shield-alt"></i></div>
                 </div>
             </div>
@@ -45,7 +56,7 @@
         <div class="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             <!-- Recommandations en attente -->
             <div
-                class="group relative p-8 bg-white border border-gray-100 shadow-sm rounded-[2rem] hover:shadow-2xl transition-all duration-500 overflow-hidden">
+                class="group relative p-4 bg-white border border-gray-100 shadow-sm rounded-[1rem] hover:shadow-2xl transition-all duration-500 overflow-hidden">
                 <div class="relative z-10">
                     <p class="text-sm font-black text-gray-400 uppercase tracking-widest mb-1">À Valider</p>
                     <div class="flex items-end justify-between">
@@ -67,7 +78,7 @@
 
             <!-- Recommandations validées -->
             <div
-                class="group relative p-8 bg-white border border-gray-100 shadow-sm rounded-[2rem] hover:shadow-2xl transition-all duration-500 overflow-hidden">
+                class="group relative p-8 bg-white border border-gray-100 shadow-sm rounded-[1rem] hover:shadow-2xl transition-all duration-500 overflow-hidden">
                 <div class="relative z-10">
                     <p class="text-sm font-black text-gray-400 uppercase tracking-widest mb-1">Total Validées</p>
                     <div class="flex items-end justify-between">
@@ -89,7 +100,7 @@
 
             <!-- Plans d'action en attente -->
             <div
-                class="group relative p-8 bg-white border border-gray-100 shadow-sm rounded-[2rem] hover:shadow-2xl transition-all duration-500 overflow-hidden">
+                class="group relative p-8 bg-white border border-gray-100 shadow-sm rounded-[1rem] hover:shadow-2xl transition-all duration-500 overflow-hidden">
                 <div class="relative z-10">
                     <p class="text-sm font-black text-gray-400 uppercase tracking-widest mb-1">Plans d'Action</p>
                     <div class="flex items-end justify-between">
@@ -106,37 +117,6 @@
                 </div>
                 <div
                     class="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-50 rounded-full opacity-50 group-hover:scale-150 transition-transform duration-700">
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== ANALYTICS SECTION ==================== -->
-        <div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
-            <!-- Chart 1: Evolution -->
-            <div class="p-10 bg-white border border-gray-100 shadow-xl rounded-[3rem]">
-                <div class="flex items-center justify-between mb-10">
-                    <h3 class="text-2xl font-black text-gray-900 tracking-tight">Activité Mensuelle</h3>
-                    <div
-                        class="flex items-center space-x-2 text-xs font-bold bg-gray-50 px-4 py-2 rounded-full text-gray-500">
-                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                        <span>Volumes de validations</span>
-                    </div>
-                </div>
-                <div class="h-80">
-                    <canvas id="validationsChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Chart 2: Distribution -->
-            <div class="p-10 bg-white border border-gray-100 shadow-xl rounded-[3rem]">
-                <div class="flex items-center justify-between mb-10">
-                    <h3 class="text-2xl font-black text-gray-900 tracking-tight">Répartition des décisions</h3>
-                    <i class="fas fa-ellipsis-h text-gray-300"></i>
-                </div>
-                <div class="h-80 flex items-center justify-center">
-                    <div class="w-full h-full">
-                        <canvas id="repartitionChart"></canvas>
-                    </div>
                 </div>
             </div>
         </div>
@@ -240,20 +220,41 @@
                     <!-- Artistic circle -->
                     <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-white/5 rounded-full blur-2xl"></div>
                 </div>
+            </div>
+        </div>
+        
+        <!-- ==================== ANALYTICS SECTION ==================== -->
+        <div class="grid grid-cols-1 gap-10 lg:grid-cols-2">
+            <!-- Chart 1: Evolution -->
+            <div class="p-10 bg-white border border-gray-100 shadow-xl rounded-[3rem]">
+                <div class="flex items-center justify-between mb-10">
+                    <h3 class="text-2xl font-black text-gray-900 tracking-tight">Activité Mensuelle</h3>
+                    <div
+                        class="flex items-center space-x-2 text-xs font-bold bg-gray-50 px-4 py-2 rounded-full text-gray-500">
+                        <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                        <span>Volumes de validations</span>
+                    </div>
+                </div>
+                <div class="h-80">
+                    <canvas id="validationsChart"></canvas>
+                </div>
+            </div>
 
-                <!-- Mini Calendar or Info Card -->
-                <div class="p-8 bg-white border border-gray-100 shadow-xl rounded-[2.5rem]">
-                    <div class="flex items-center space-x-4">
-                        <div class="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400">
-                            <i class="fas fa-calendar-check text-2xl"></i>
-                        </div>
-                        <div>
-                            <p class="text-xs font-black text-gray-400 uppercase tracking-widest">Dernière Mise à jour</p>
-                            <p class="text-lg font-black text-gray-900">{{ now()->translatedFormat('d F Y') }}</p>
-                        </div>
+            <!-- Chart 2: Distribution -->
+            <div class="p-10 bg-white border border-gray-100 shadow-xl rounded-[3rem]">
+                <div class="flex items-center justify-between mb-10">
+                    <h3 class="text-2xl font-black text-gray-900 tracking-tight">Répartition des décisions</h3>
+                    <i class="fas fa-ellipsis-h text-gray-300"></i>
+                </div>
+                <div class="h-80 flex items-center justify-center">
+                    <div class="w-full h-full">
+                        <canvas id="repartitionChart"></canvas>
                     </div>
                 </div>
             </div>
+        </div>
+
+        
         </div>
     </div>
 

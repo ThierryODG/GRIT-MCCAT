@@ -149,6 +149,11 @@ class Recommandation extends Model
         return $this->belongsTo(Structure::class);
     }
 
+    public function documents()
+    {
+        return $this->hasMany(RecommandationDocument::class);
+    }
+
     public function scopeEnRetard($query)
     {
         return $query->where('date_limite', '<', now())

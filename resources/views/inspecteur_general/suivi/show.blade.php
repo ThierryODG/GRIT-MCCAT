@@ -105,6 +105,26 @@
                                     {{ $action->commentaire_avancement ?? 'Aucun commentaire pour le moment.' }}
                                 </div>
                             </div>
+                            
+                            <!-- Preuves d'exécution -->
+                            <div class="mt-4 border-t border-gray-100 pt-4">
+                                <h4 class="text-sm font-semibold text-gray-700 mb-2">Preuves d'exécution</h4>
+                                @if($action->preuvesExecution->count() > 0)
+                                    <ul class="space-y-2">
+                                        @foreach($action->preuvesExecution as $preuve)
+                                            <li class="flex items-center text-sm">
+                                                <i class="fas fa-file-alt text-gray-400 mr-2"></i>
+                                                <a href="{{ route('point_focal.avancement.download_preuve', $preuve) }}" class="text-blue-600 hover:underline" target="_blank">
+                                                    {{ $preuve->file_name }}
+                                                </a>
+                                                <span class="text-xs text-gray-400 ml-2">({{ $preuve->created_at->format('d/m/Y') }})</span>
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p class="text-sm text-gray-500 italic">Aucune preuve jointe.</p>
+                                @endif
+                            </div>
 
                             <div class="flex items-center gap-4 pt-4">
                                 <span class="text-sm text-gray-600">Statut actuel :</span>

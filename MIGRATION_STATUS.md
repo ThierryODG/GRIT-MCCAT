@@ -1,4 +1,4 @@
-# GRIT Application - Validation Workflow Migration Status
+# SIGR-ITS Application - Validation Workflow Migration Status
 
 ## Session Overview
 This session focused on restructuring the validation workflow from plan-action-level to **recommendation-level** validation, and fixing database errors that were blocking the Inspecteur Général interface.

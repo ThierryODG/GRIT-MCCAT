@@ -185,7 +185,7 @@
     @endif
 
     <div class="footer">
-        Document généré automatiquement par la plateforme GRIT - MCCAT
+        Document généré automatiquement par la plateforme SIGR-ITS - MCCAT
     </div>
 </body>
 </html>

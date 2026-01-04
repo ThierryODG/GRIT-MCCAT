@@ -68,7 +68,7 @@
     <!-- Footer -->
     <div class="p-4 border-t border-gray-200 bg-gray-50">
         <div class="text-center">
-            <p class="text-xs font-semibold text-gray-600">GRIT - MCCAT</p>
+            <p class="text-xs font-semibold text-gray-600">SIGR-ITS - MCCAT</p>
             <p class="mt-1 text-xs text-gray-400">Gestion des Recommandations ITS</p>
         </div>
     </div>

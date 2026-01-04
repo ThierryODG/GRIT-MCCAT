@@ -56,6 +56,11 @@ class PlanAction extends Model
         return $this->belongsTo(Recommandation::class);
     }
 
+    public function preuvesExecution()
+    {
+        return $this->hasMany(PreuveExecution::class);
+    }
+
     public function pointFocal()
     {
         return $this->belongsTo(User::class, 'point_focal_id');

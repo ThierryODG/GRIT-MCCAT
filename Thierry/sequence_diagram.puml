@@ -1,0 +1,65 @@
+@startuml sequence_diagram
+
+autonumber
+skinparam monochrome true
+skinparam shadowing false
+
+actor "ITS" as ITS
+actor "Inspecteur Général" as IG
+actor "Point Focal" as PF
+actor "Responsable" as RESP
+participant "Système de Gestion" as Sys
+participant "Système de notification" as NoteSys
+database "Base de Données" as DB
+
+== Phase 1 : Création & Validation ==
+ITS -> Sys : Saisir Recommandation
+Sys -> DB : Enregistrer (Statut: Brouillon)
+Sys -> NoteSys : Declencher Notification
+NoteSys -> IG : Notification nouvelle recommandation
+
+ITS -> Sys : Soumettre à l'IG
+IG -> Sys : Valider Recommandation
+Sys -> DB : Update (Statut: Validée IG)
+Sys -> NoteSys : Declencher Notification
+NoteSys -> ITS : Confirmation validation
+
+== Phase 2 : Planification ==
+ITS -> Sys : Choisir un Point Focal
+Sys -> DB : Assigner PF
+Sys -> NoteSys : Declencher Notification
+NoteSys -> PF : Notification assignation
+
+PF -> Sys : Etablir plan d'action
+PF -> Sys : Soumettre au Responsable
+Sys -> DB : Update (Statut: Plan Soumis)
+Sys -> NoteSys : Declencher Notification
+NoteSys -> RESP : Notification validation plan
+
+== Phase 3 : Validation du Plan ==
+RESP -> Sys : Valider le plan d'action
+Sys -> DB : Update (Statut: Plan Validé Resp)
+Sys -> NoteSys : Declencher Notification
+NoteSys -> IG : Notification validation finale
+
+IG -> Sys : Valider le plan (IG)
+Sys -> DB : Update (Statut: En Exécution)
+Sys -> NoteSys : Declencher Notification
+NoteSys -> PF : Notification début exécution
+
+== Phase 4 : Exécution & Clôture ==
+loop Suivi
+    PF -> Sys : Mettre à jour le status (%)
+    Sys -> DB : Log avancement
+end
+
+PF -> Sys : Demander Clôture
+Sys -> NoteSys : Declencher Notification
+NoteSys -> IG : Notification demande clôture
+
+IG -> Sys : Clôturer la recommandation
+Sys -> DB : Update (Statut: Clôturée)
+Sys -> NoteSys : Declencher Notification
+NoteSys -> All : Notification clôture finale
+
+@enduml
