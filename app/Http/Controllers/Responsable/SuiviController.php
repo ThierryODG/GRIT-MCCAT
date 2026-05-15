@@ -21,7 +21,12 @@ class SuiviController extends Controller
                 'execution_terminee',
                 'demande_cloture',
                 'cloturee'
-            ]);
+            ])
+            ->when($request->view === 'archives', function ($q) {
+                $q->archived();
+            }, function ($q) {
+                $q->notArchived();
+            });
 
         // Filtres
         if ($request->filled('statut')) {
@@ -68,6 +73,7 @@ class SuiviController extends Controller
             'its:id,name',
             'inspecteurGeneral:id,name',
             'pointFocal:id,name,telephone',
+            'documents',
             'plansAction.preuvesExecution'
         ]);
 

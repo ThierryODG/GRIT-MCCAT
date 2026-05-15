@@ -44,7 +44,7 @@
                         <div>
                             <label class="text-sm font-medium text-gray-500">Priorité</label>
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                        {{ $recommandation->priorite == 'haute' ? 'bg-red-100 text-red-800' :
+                                            {{ $recommandation->priorite == 'haute' ? 'bg-red-100 text-red-800' :
         ($recommandation->priorite == 'moyenne' ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800') }}">
                                 {{ ucfirst($recommandation->priorite) }}
                             </span>
@@ -64,9 +64,32 @@
 
                 <!-- Description de la recommandation -->
                 <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
-                    <h2 class="mb-4 text-lg font-semibold text-gray-900">Description de la recommandation</h2>
+                    <h2 class="mb-4 text-lg font-semibold text-gray-900">Question / Description</h2>
                     <p class="text-gray-700 whitespace-pre-line">{{ $recommandation->description }}</p>
                 </div>
+
+                <!-- Pièces jointes (AJOUT) -->
+                @if($recommandation->documents->count() > 0)
+                    <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+                        <h2 class="mb-4 text-lg font-semibold text-gray-900">Pièces jointes</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach($recommandation->documents as $doc)
+                                <div class="flex items-center justify-between p-3 border border-gray-100 rounded-lg bg-gray-50">
+                                    <div class="flex items-center space-x-3 overflow-hidden">
+                                        <i class="fas fa-file-alt text-blue-500"></i>
+                                        <span class="text-sm font-medium text-gray-700 truncate">
+                                            {{ $doc->description ?? $doc->file_name }}
+                                        </span>
+                                    </div>
+                                    <a href="{{ route('its.recommandations.download', $doc) }}"
+                                        class="text-gray-400 hover:text-blue-600 transition-colors p-1">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Informations de planification -->
                 @if($recommandation->indicateurs || $recommandation->incidence_financiere || $recommandation->delai_mois)

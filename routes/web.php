@@ -20,6 +20,7 @@ Route::redirect('/', '/login');
 Route::get('/dashboard', function () {
     // Redirection vers le dashboard selon le rôle
     if (Auth::check()) {
+        /** @var \App\Models\User $user */
         $user = Auth::user();
 
         if ($user->hasRole('its')) {
@@ -51,7 +52,7 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('/notifications/list', [NotificationController::class, 'list'])->name('notifications.list'); // AJAX
-    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read'); // AJAX
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead'); // AJAX
     // Route::post('/notifications/{id}/marquer-lu', [NotificationController::class, 'markAsRead'])->name('notifications.markAsRead');
     Route::post('/notifications/tout-marquer-lu', [NotificationController::class, 'markAllAsRead'])->name('notifications.markAllAsRead');
 });

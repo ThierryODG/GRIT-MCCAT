@@ -16,6 +16,11 @@ class RecommandationController extends Controller
 
         $recommandations = Recommandation::where('structure_id', $user->structure_id)
             ->with(['its', 'pointFocal', 'structure'])
+            ->when(request('view') === 'archives', function ($q) {
+                $q->archived();
+            }, function ($q) {
+                $q->notArchived();
+            })
             ->orderBy('created_at', 'desc')
             ->get();
 

@@ -170,8 +170,8 @@ class AvancementController extends Controller
         }
 
         // Suppression du fichier
-        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($preuve->file_path)) {
-            \Illuminate\Support\Facades\Storage::disk('public')->delete($preuve->file_path);
+        if (Storage::disk('public')->exists($preuve->file_path)) {
+            Storage::disk('public')->delete($preuve->file_path);
         }
 
         $preuve->delete();
@@ -187,11 +187,14 @@ class AvancementController extends Controller
         // TODO: Vérifier les permissions (ex: Point Focal, Superviseur)
         // Pour l'instant, on laisse ouvert aux authentifiés comme demandé
         
-        if (!Storage::disk('public')->exists($preuve->file_path)) {
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+
+        if (!$disk->exists($preuve->file_path)) {
             abort(404, 'Fichier non trouvé');
         }
 
-        return Storage::disk('public')->download($preuve->file_path, $preuve->file_name);
+        return $disk->download($preuve->file_path, $preuve->file_name);
     }
 
     public function downloadReport(Recommandation $recommandation)

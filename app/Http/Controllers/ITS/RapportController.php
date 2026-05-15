@@ -65,7 +65,7 @@ class RapportController extends Controller
             $query->where('priorite', $validated['priorite']);
         }
 
-        $recommandations = $query->with(['inspecteurGeneral', 'pointFocal', 'planAction'])
+        $recommandations = $query->with(['inspecteurGeneral', 'pointFocal', 'plansAction'])
             ->get();
 
         // ==================== STATISTIQUES ====================

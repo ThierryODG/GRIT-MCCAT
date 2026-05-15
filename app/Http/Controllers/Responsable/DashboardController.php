@@ -14,26 +14,25 @@ class DashboardController extends Controller
         $structureId = Auth::user()->structure_id;
 
         $stats = $this->getStats($structureId);
-        $plansEnAttente = $this->getPlansEnAttente($structureId);
+        $recommandationsAttente = $this->getRecommandationsAttente($structureId);
         $recommandationsRecentes = $this->getRecommandationsRecentes($structureId);
 
         return view('responsable.dashboard', compact(
             'stats',
-            'plansEnAttente',
+            'recommandationsAttente',
             'recommandationsRecentes'
         ));
     }
 
-    private function getStats($structureId): array
+    private function getStats(int $structureId): array
     {
         // Recommandations assignées à la structure
         $recommandationsAssignees = Recommandation::where('structure_id', $structureId)->count();
 
-        // Plans en attente de validation responsable (dérivé du statut de la recommandation)
-        $plansEnAttenteCount = PlanAction::whereHas('recommandation', function($query) use ($structureId) {
-            $query->where('structure_id', $structureId)
-                  ->where('statut', 'plan_soumis_responsable');
-        })->count();
+        // Recommandations en attente de validation (statut plan_soumis_responsable)
+        $recommandationsAttenteCount = Recommandation::where('structure_id', $structureId)
+            ->where('statut', 'plan_soumis_responsable')
+            ->count();
 
         // Recommandations en retard
         $recommandationsRetard = Recommandation::where('structure_id', $structureId)
@@ -41,47 +40,54 @@ class DashboardController extends Controller
             ->whereNotIn('statut', ['cloturee', 'execution_terminee'])
             ->count();
 
-        // Taux de validation des plans
-        $totalPlansSoumis = PlanAction::whereHas('recommandation', function($query) use ($structureId) {
-            $query->where('structure_id', $structureId);
-        })->count();
+        // Taux de progression globale
+        $plansAction = PlanAction::whereHas('recommandation', function($q) use ($structureId) {
+            $q->where('structure_id', $structureId);
+        })->get();
 
-        $plansValides = PlanAction::whereHas('recommandation', function($query) use ($structureId) {
-            $query->where('structure_id', $structureId)
-                  ->whereIn('statut', ['plan_valide_responsable', 'plan_valide_ig']);
-        })->count();
+        $totalProgression = $plansAction->sum('pourcentage_avancement');
+        $progressionGlobale = $plansAction->count() > 0 ? round($totalProgression / $plansAction->count()) : 0;
 
-        $tauxValidation = $totalPlansSoumis > 0 ? round(($plansValides / $totalPlansSoumis) * 100, 1) : 0;
+        // Répartition par priorité
+        $priorites = Recommandation::where('structure_id', $structureId)
+            ->selectRaw('priorite, count(*) as total')
+            ->groupBy('priorite')
+            ->pluck('total', 'priorite')
+            ->toArray();
+
+        // S'assurer que toutes les priorités sont présentes
+        $priorites = array_merge([
+            'haute' => 0,
+            'moyenne' => 0,
+            'basse' => 0
+        ], $priorites);
 
         return [
             'recommandations_assignees' => $recommandationsAssignees,
-            'plans_en_attente' => $plansEnAttenteCount,
+            'recommandations_attente' => $recommandationsAttenteCount,
             'recommandations_retard' => $recommandationsRetard,
-            'taux_validation' => $tauxValidation,
+            'progression_globale' => $progressionGlobale,
+            'par_priorite' => $priorites
         ];
     }
 
-    private function getPlansEnAttente($structureId)
+    private function getRecommandationsAttente(int $structureId)
     {
-        return PlanAction::whereHas('recommandation', function($query) use ($structureId) {
-            $query->where('structure_id', $structureId)
-                  ->where('statut', 'plan_soumis_responsable');
-        })
-        ->with([
-            'recommandation:id,titre',
-            'pointFocal:id,name'
-        ])
-        ->latest()
-        ->take(5)
-        ->get();
+        return Recommandation::where('structure_id', $structureId)
+            ->where('statut', 'plan_soumis_responsable')
+            ->with(['pointFocal:id,name', 'its:id,name'])
+            ->latest()
+            ->take(5)
+            ->get();
     }
 
-    private function getRecommandationsRecentes($structureId)
+    private function getRecommandationsRecentes(int $structureId)
     {
         return Recommandation::where('structure_id', $structureId)
             ->with([
                 'its:id,name',
-                'pointFocal:id,name'
+                'pointFocal:id,name',
+                'plansAction' // Pour afficher la mini barre de progression si besoin
             ])
             ->latest()
             ->take(5)

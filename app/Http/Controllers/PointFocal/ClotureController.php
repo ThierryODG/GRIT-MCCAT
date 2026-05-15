@@ -5,6 +5,7 @@ namespace App\Http\Controllers\PointFocal;
 use App\Http\Controllers\Controller;
 use App\Models\Recommandation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ClotureController extends Controller
 {
@@ -13,9 +14,9 @@ class ClotureController extends Controller
      */
     public function index()
     {
-        $recommandations = Recommandation::where('point_focal_id', auth()->id())
+        $recommandations = Recommandation::where('point_focal_id', Auth::id())
             ->where('statut', 'execution_terminee') // Exécution terminée
-            ->with(['its:id,name', 'planAction'])
+            ->with(['its:id,name', 'plansAction'])
             ->orderBy('updated_at', 'desc')
             ->paginate(15);
 
@@ -33,7 +34,7 @@ class ClotureController extends Controller
         ]);
 
         // Vérifications
-        if ($recommandation->point_focal_id !== auth()->id()) {
+        if ($recommandation->point_focal_id !== Auth::id()) {
             abort(403, 'Cette recommandation ne vous est pas assignée.');
         }
 
@@ -41,9 +42,9 @@ class ClotureController extends Controller
             return back()->with('error', 'L\'exécution doit être terminée à 100% avant de demander la clôture.');
         }
 
-        // Vérifier que le plan d'action est bien à 100%
-        if (!$recommandation->planAction || $recommandation->planAction->pourcentage_avancement < 100) {
-            return back()->with('error', 'Le plan d\'action doit être terminé à 100%.');
+        // Vérifier que tous les plans d'action sont bien à 100%
+        if ($recommandation->plansAction->isEmpty() || $recommandation->plansAction->min('pourcentage_avancement') < 100) {
+            return back()->with('error', 'Tous les plans d\'action doivent être terminés à 100%.');
         }
 
         // Demander la clôture

@@ -9,6 +9,18 @@
                 <h1 class="text-3xl font-bold text-gray-800">Suivi de l'exécution</h1>
                 <p class="text-gray-600 mt-2">Suivez l'avancement des recommandations de votre structure</p>
             </div>
+
+            <!-- Toggle Archives -->
+            <div class="flex bg-gray-200 rounded-lg p-1">
+                <a href="{{ route('responsable.suivi.index', array_merge(request()->query(), ['view' => 'active'])) }}"
+                    class="px-3 py-1 text-sm rounded-md transition {{ request('view') !== 'archives' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                    Actives
+                </a>
+                <a href="{{ route('responsable.suivi.index', array_merge(request()->query(), ['view' => 'archives'])) }}"
+                    class="px-3 py-1 text-sm rounded-md transition {{ request('view') === 'archives' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                    Archives
+                </a>
+            </div>
         </div>
 
         <!-- Filtres -->
@@ -36,7 +48,8 @@
                         <option value="">Tous les points focaux</option>
                         @foreach($pointsFocaux as $pf)
                             <option value="{{ $pf->id }}" {{ request('point_focal_id') == $pf->id ? 'selected' : '' }}>
-                                {{ $pf->name }}</option>
+                                {{ $pf->name }}
+                            </option>
                         @endforeach
                     </select>
                 </div>
@@ -111,7 +124,8 @@
                                             </div>
                                             <div class="ml-3">
                                                 <div class="text-sm font-medium text-gray-900">
-                                                    {{ $recommandation->pointFocal->name ?? 'Non assigné' }}</div>
+                                                    {{ $recommandation->pointFocal->name ?? 'Non assigné' }}
+                                                </div>
                                             </div>
                                         </div>
                                     </td>
@@ -126,9 +140,8 @@
                                         </div>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap">
-                                        <span
-                                            class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                                    {{ $recommandation->statut === 'demande_cloture' ? 'bg-purple-100 text-purple-800' :
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                                                    {{ $recommandation->statut === 'demande_cloture' ? 'bg-purple-100 text-purple-800' :
                             ($percent >= 100 ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800') }}">
                                             {{ $recommandation->statut === 'demande_cloture' ? 'Demande de Clôture' : ($percent >= 100 ? 'Terminé' : 'En cours') }}
                                         </span>

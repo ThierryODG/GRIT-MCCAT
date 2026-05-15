@@ -54,7 +54,7 @@
                             Vous pouvez créer plusieurs actions/mesures pour la même recommandation.
                         </p>
                         <textarea name="action" id="action" rows="4" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                                @error('action') border-red-500 @enderror"
+                                        @error('action') border-red-500 @enderror"
                             placeholder="Ex: Former le personnel en audit interne, documenter le processus, mettre en place le suivi..."
                             required>{{ old('action') }}</textarea>
                         @error('action')
@@ -69,14 +69,14 @@
 
                         <div class="flex items-center space-x-6 mb-4">
                             <div class="flex items-center">
-                                <input id="executant_self" name="executant_type" type="radio" value="self" {{ old('executant_type', 'self') == 'self' ? 'checked' : '' }}
+                                <input id="executant_self" name="executant_type" type="radio" value="moi_meme" {{ old('executant_type', 'moi_meme') == 'moi_meme' ? 'checked' : '' }}
                                     class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
                                 <label for="executant_self" class="ml-2 block text-sm text-gray-700">
                                     Moi-même (Point Focal)
                                 </label>
                             </div>
                             <div class="flex items-center">
-                                <input id="executant_other" name="executant_type" type="radio" value="other" {{ old('executant_type') == 'other' ? 'checked' : '' }}
+                                <input id="executant_other" name="executant_type" type="radio" value="autre" {{ old('executant_type') == 'autre' ? 'checked' : '' }}
                                     class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
                                 <label for="executant_other" class="ml-2 block text-sm text-gray-700">
                                     Une autre personne / entité
@@ -85,7 +85,7 @@
                         </div>
 
                         <div id="executant_details"
-                            class="grid grid-cols-1 md:grid-cols-2 gap-4 {{ old('executant_type') == 'other' ? '' : 'hidden' }}">
+                            class="grid grid-cols-1 md:grid-cols-2 gap-4 {{ old('executant_type') == 'autre' ? '' : 'hidden' }}">
                             <div>
                                 <label for="executant_nom" class="block mb-1 text-sm font-medium text-gray-700">Nom de
                                     l'exécutant</label>
@@ -136,23 +136,33 @@
     </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const radioSelf = document.getElementById('executant_self');
             const radioOther = document.getElementById('executant_other');
             const detailsDiv = document.getElementById('executant_details');
+            const inputNom = document.getElementById('executant_nom');
+            const inputRole = document.getElementById('executant_role');
 
             function toggleDetails() {
                 if (radioOther.checked) {
                     detailsDiv.classList.remove('hidden');
+                    inputNom.setAttribute('required', 'required');
                 } else {
                     detailsDiv.classList.add('hidden');
+                    inputNom.removeAttribute('required');
+                    // Optionnel : on vide les champs si on repasse sur "moi_meme"
+                    // inputNom.value = "";
+                    // inputRole.value = "";
                 }
             }
 
             radioSelf.addEventListener('change', toggleDetails);
             radioOther.addEventListener('change', toggleDetails);
+
+            // État initial au chargement
+            toggleDetails();
         });
     </script>
-@endsection
+@endpush

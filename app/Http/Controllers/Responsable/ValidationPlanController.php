@@ -32,7 +32,7 @@ class ValidationPlanController extends Controller
             Recommandation::STATUT_PLAN_REJETE_IG,
         ];
 
-        $pointFocaux = \App\Models\User::where('structure_id', $structureId)
+        $pointFocaux = User::where('structure_id', $structureId)
             ->whereHas('recommandationsAssignees', function ($q) use ($structureId, $statutsRecommandationsVisibles) {
                 $q->where('structure_id', $structureId)
                   ->whereIn('statut', $statutsRecommandationsVisibles)
@@ -89,6 +89,7 @@ class ValidationPlanController extends Controller
             'structure',
             'its',
             'pointFocal',
+            'documents',
             'plansAction' => function ($q) {
                 $q->whereNotNull('action')
                   ->orderBy('created_at', 'asc');
@@ -255,6 +256,7 @@ class ValidationPlanController extends Controller
 
         $planAction->load([
             'recommandation.its:id,name',
+            'recommandation.documents',
             'pointFocal:id,name,telephone'
         ]);
 

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 
 class Recommandation extends Model
 {
@@ -58,6 +59,13 @@ class Recommandation extends Model
         'commentaire_validation_responsable',
         'date_rejet_responsable',
         'date_validation_responsable',
+        'archived_at',
+    ];
+
+    protected $dates = [
+        'date_limite',
+        'date_cloture',
+        'archived_at',
     ];
 
     protected $casts = [
@@ -68,6 +76,7 @@ class Recommandation extends Model
         'date_validation_responsable' => 'datetime',
         'date_rejet_responsable' => 'datetime',
         'date_cloture' => 'datetime',
+        'archived_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -154,18 +163,18 @@ class Recommandation extends Model
         return $this->hasMany(RecommandationDocument::class);
     }
 
-    public function scopeEnRetard($query)
+    public function scopeEnRetard(Builder $query)
     {
         return $query->where('date_limite', '<', now())
             ->whereNotIn('statut', ['cloturee', 'execution_terminee']);
     }
 
-    public function scopeParStatut($query, $statut)
+    public function scopeParStatut(Builder $query, string $statut)
     {
         return $query->where('statut', $statut);
     }
 
-    public function scopeParPriorite($query, $priorite)
+    public function scopeParPriorite(Builder $query, string $priorite)
     {
         return $query->where('priorite', $priorite);
     }
@@ -407,5 +416,31 @@ class Recommandation extends Model
             : \Carbon\Carbon::parse($this->date_rejet_responsable);
 
         return $dt->format('d/m/Y à H:i');
+    }
+
+    // ==================== ARCHIVAGE ====================
+
+    /**
+     * Scope pour les recommandations archivées.
+     */
+    public function scopeArchived(Builder $query)
+    {
+        return $query->whereNotNull('archived_at');
+    }
+
+    /**
+     * Scope pour les recommandations NON archivées (actives).
+     */
+    public function scopeNotArchived(Builder $query)
+    {
+        return $query->whereNull('archived_at');
+    }
+
+    /**
+     * Vérifie si la recommandation est archivée.
+     */
+    public function estArchivee()
+    {
+        return !is_null($this->archived_at);
     }
 }

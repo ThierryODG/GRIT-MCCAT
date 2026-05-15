@@ -94,6 +94,38 @@
                         </div>
                     </div>
 
+                    <!-- Details -->
+                    <div class="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-100">
+                        <div class="mb-6">
+                            <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Question / Constat / Description</h5>
+                            <p class="text-gray-700 text-sm whitespace-pre-line">{{ $recommandation->description }}</p>
+                        </div>
+
+                        @if($recommandation->documents->count() > 0)
+                            <div class="border-t border-gray-200 pt-4">
+                                <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 flex items-center">
+                                    <i class="fas fa-paperclip mr-2"></i> Pièces jointes de la recommandation
+                                </h5>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    @foreach($recommandation->documents as $doc)
+                                        <div class="flex items-center justify-between p-2 border border-gray-100 rounded-lg bg-white">
+                                            <div class="flex items-center space-x-2 overflow-hidden">
+                                                <i class="fas fa-file-pdf text-blue-500 text-xs"></i>
+                                                <span class="text-[10px] font-semibold text-gray-700 truncate">
+                                                    {{ $doc->description ?? $doc->file_name }}
+                                                </span>
+                                            </div>
+                                            <a href="{{ route('its.recommandations.download', $doc) }}" 
+                                               class="p-1 text-gray-400 hover:text-blue-600 transition-colors">
+                                                <i class="fas fa-download text-xs"></i>
+                                            </a>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+
                     <!-- Execution Status -->
                     <div class="mt-auto border-t border-gray-100 pt-8">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">État d'avancement</h3>

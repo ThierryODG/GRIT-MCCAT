@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Recommandation;
+use Illuminate\Database\Eloquent\Builder;
 
 class PlanAction extends Model
 {
@@ -28,6 +29,11 @@ class PlanAction extends Model
         'statut_execution',
         'pourcentage_avancement',
         'commentaire_avancement',
+
+        // EXÉCUTANT
+        'executant_type',
+        'executant_nom',
+        'executant_role',
 
         // DÉLAIS ET DATES (AUTOMATISÉS)
         'delai_mois',
@@ -83,25 +89,25 @@ class PlanAction extends Model
 
     // ==================== SCOPES ====================
 
-    public function scopeEnAttenteValidationResponsable($query)
+    public function scopeEnAttenteValidationResponsable(Builder $query)
     {
         // deprecated: validation is now at recommendation level
         return $query->whereNotNull('action');
     }
 
-    public function scopeEnAttenteValidationIG($query)
+    public function scopeEnAttenteValidationIG(Builder $query)
     {
         // deprecated: validation is now at recommendation level
         return $query;
     }
 
-    public function scopeValides($query)
+    public function scopeValides(Builder $query)
     {
         // deprecated: validation is now at recommendation level
         return $query;
     }
 
-    public function scopeEnExecution($query)
+    public function scopeEnExecution(Builder $query)
     {
         return $query->where('statut_execution', 'en_cours');
     }

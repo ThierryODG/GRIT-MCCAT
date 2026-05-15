@@ -12,8 +12,12 @@ class NotificationController extends Controller
      */
     public function index()
     {
-        // Utilisation de la relation standard : notifications() ou unreadNotifications()
-        $notifications = Auth::user()->notifications()->paginate(15);
+        $this->pruneNotifications();
+
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        $notifications = $user->notifications()->paginate(15);
 
         return view('notifications.index', compact('notifications'));
     }
@@ -23,7 +27,10 @@ class NotificationController extends Controller
      */
     public function list()
     {
-        $notifications = Auth::user()->unreadNotifications()->limit(5)->get()->map(function($n) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $notifications = $user->unreadNotifications()->limit(5)->get()->map(function($n) {
             return [
                 'id' => $n->id,
                 'data' => $n->data,
@@ -38,9 +45,12 @@ class NotificationController extends Controller
     /**
      * Marquer une notification comme lue et rediriger si nécessaire
      */
-    public function markAsRead(Request $request, $id)
+    public function markAsRead(Request $request, int $id)
     {
-        $notification = Auth::user()->notifications()->where('id', $id)->first();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        $notification = $user->notifications()->where('id', $id)->first();
 
         if ($notification) {
             $notification->markAsRead();
@@ -54,12 +64,42 @@ class NotificationController extends Controller
     }
 
     /**
-     * Marquer toutes les notifications comme lues
+     * Marquer toutes les notifications comme lues et nettoyer les anciennes
      */
     public function markAllAsRead()
     {
-        Auth::user()->unreadNotifications->markAsRead();
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Marquer tout comme lu
+        $user->unreadNotifications->markAsRead();
 
-        return back()->with('success', 'Toutes les notifications ont été marquées comme lues.');
+        // Nettoyage immédiat : On supprime les notifications lues depuis plus de 24h
+        $user->notifications()
+            ->whereNotNull('read_at')
+            ->where('read_at', '<', now()->subDay())
+            ->delete();
+
+        return back()->with('success', 'Notifications traitées et nettoyées.');
+    }
+
+    /**
+     * Supprimer automatiquement les très anciennes notifications
+     */
+    private function pruneNotifications()
+    {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Supprimer toutes les notifications (lues ou non) de plus de 30 jours pour éviter d'encombrer la base
+        $user->notifications()
+            ->where('created_at', '<', now()->subDays(30))
+            ->delete();
+            
+        // Supprimer de manière préemptive les notifications déjà lues depuis plus de 7 jours
+        $user->notifications()
+            ->whereNotNull('read_at')
+            ->where('read_at', '<', now()->subDays(7))
+            ->delete();
     }
 }

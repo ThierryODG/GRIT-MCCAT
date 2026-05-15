@@ -15,8 +15,14 @@ class RecommandationController extends Controller
         $userId = Auth::id();
 
         // Méthode 1: Utiliser la relation existante via les recommandations
+        // Méthode 1: Utiliser la relation existante via les recommandations
         $recommandations = Recommandation::where('point_focal_id', $userId)
             ->with(['its', 'structure', 'plansAction'])
+            ->when(request('view') === 'archives', function ($q) {
+                $q->archived();
+            }, function ($q) {
+                $q->notArchived();
+            })
             ->get();
 
         // Grouper les recommandations par ITS
@@ -36,12 +42,12 @@ class RecommandationController extends Controller
             abort(403, 'Accès non autorisé à cette recommandation.');
         }
 
-        $recommandation->load(['structure', 'its', 'plansAction']);
+        $recommandation->load(['structure', 'its', 'plansAction', 'documents']);
 
          return view('point_focal.recommandations.show', [
         'recommandation' => $recommandation,
-        'peutSoumettre' => $recommandation->peutEtreSoumiseParPointFocal(), // Méthode que tu as ajoutée au modèle
-        'aEteRejetee' => $recommandation->aEteRejeteeParResponsable(),     // Méthode que tu as ajoutée au modèle
+        'peutSoumettre' => $recommandation->peutEtreSoumiseParPointFocal(),
+        'aEteRejetee' => $recommandation->aEteRejeteeParResponsable(),
     ]);
 
         return view('point_focal.recommandations.show', compact('recommandation'));
@@ -221,10 +227,11 @@ class RecommandationController extends Controller
                 $recommandation->responsable->notify(new \App\Notifications\PlanningSubmitted($recommandation));
             } else {
                 // si pas de responsable précis, notifier les responsables de la structure
-                $responsables = \App\Models\User::where('structure_id', $recommandation->structure_id)
+                $responsables = User::where('structure_id', $recommandation->structure_id)
                     ->where('role', 'responsable')
                     ->get();
                 foreach ($responsables as $resp) {
+                    /** @var \App\Models\User $resp */
                     $resp->notify(new \App\Notifications\PlanningSubmitted($recommandation));
                 }
             }
@@ -235,5 +242,59 @@ class RecommandationController extends Controller
 
         return redirect()->route('point_focal.recommandations.show', $recommandation)
             ->with('success', 'Planification soumise au responsable.');
+    }
+
+    /**
+     * Envoyer un rappel manuel
+     */
+    public function rappel(Request $request, Recommandation $recommandation)
+    {
+        // Vérifier que c'est bien le Point Focal assigné
+        if ($recommandation->point_focal_id !== Auth::id()) {
+            abort(403, 'Action non autorisée.');
+        }
+
+        $validated = $request->validate([
+            'destinataire' => 'required|in:its,responsable,inspecteur_general',
+            'message' => 'nullable|string|max:1000',
+        ]);
+
+        // Créer le commentaire de type "rappel"
+        $recommandation->commentaires()->create([
+            'user_id' => Auth::id(),
+            'destinataire_role' => $validated['destinataire'],
+            'contenu' => $validated['message'] ?? 'Rappel envoyé par le Point Focal.',
+            'type' => 'rappel',
+        ]);
+
+        // Identifier le destinataire pour la notification
+        $recipient = match($validated['destinataire']) {
+            'its' => $recommandation->its,
+            'responsable' => $recommandation->responsable,
+            'inspecteur_general' => $recommandation->inspecteurGeneral,
+        };
+
+        if ($recipient) {
+            $recipient->notify(new \App\Notifications\ManualReminderReceived(
+                $recommandation,
+                Auth::user(),
+                $validated['message'] ?? 'Rappel envoyé concernant cette recommandation.'
+            ));
+        } else {
+            $destinataireLabel = match($validated['destinataire']) {
+                'its' => 'I\'ITS',
+                'responsable' => 'le Responsable',
+                'inspecteur_general' => 'l\'Inspecteur Général',
+            };
+            return back()->with('error', "Impossible d'envoyer le rappel : {$destinataireLabel} n'est pas encore assigné à cette recommandation.");
+        }
+
+        $destinataireLabel = match($validated['destinataire']) {
+            'its' => 'ITS',
+            'responsable' => 'Responsable',
+            'inspecteur_general' => 'Inspecteur Général',
+        };
+
+        return back()->with('success', "Rappel envoyé avec succès au {$destinataireLabel}.");
     }
 }

@@ -3,200 +3,305 @@
 @section('title', 'Tableau de Bord - Responsable')
 
 @section('content')
-<div class="space-y-6">
-    <!-- ==================== KPI CARDS ==================== -->
-    <div class="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <!-- Recommandations assignées -->
-        <div class="p-6 transition-shadow duration-300 bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Recommandations Assignées</p>
-                    <p class="mt-2 text-3xl font-bold text-blue-600">{{ $stats['recommandations_assignees'] }}</p>
-                    <p class="mt-1 text-xs text-gray-500">À votre structure</p>
-                </div>
-                <div class="p-3 rounded-lg bg-blue-50">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    <div class="space-y-8 pb-10">
+        <!-- ==================== HEADER & GLOBAL PROGRESS ==================== -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div>
+                <h1 class="text-3xl font-extrabold text-gray-900 tracking-tight">Tableau de Bord</h1>
+                <p class="mt-2 text-gray-500 font-medium italic">Bienvenue, {{ Auth::user()->name }}. Voici l'état actuel de
+                    votre structure.</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-6 min-w-[300px]">
+                <div class="relative w-16 h-16 flex-shrink-0">
+                    <svg class="w-full h-full transform -rotate-90">
+                        <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="6" fill="transparent"
+                            class="text-gray-100" />
+                        <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="6" fill="transparent"
+                            stroke-dasharray="{{ 2 * pi() * 28 }}"
+                            stroke-dashoffset="{{ 2 * pi() * 28 * (1 - $stats['progression_globale'] / 100) }}"
+                            class="text-blue-600 transition-all duration-1000 ease-out" />
                     </svg>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <span class="text-sm font-bold text-gray-900">{{ $stats['progression_globale'] }}%</span>
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">Progression Globale</p>
+                    <p class="text-xl font-black text-gray-900 leading-none mt-1">Mise en œuvre</p>
+                    <p class="text-xs text-blue-600 font-medium mt-1">Moyenne de tous les plans</p>
                 </div>
             </div>
         </div>
 
-        <!-- Plans en attente -->
-        <div class="p-6 transition-shadow duration-300 bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Plans en Attente</p>
-                    <p class="mt-2 text-3xl font-bold text-orange-600">{{ $stats['plans_en_attente'] }}</p>
-                    <p class="mt-1 text-xs text-gray-500">Validation requise</p>
+        <!-- ==================== KPI CARDS ==================== -->
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <!-- Recommandations Assignées -->
+            <div
+                class="relative group bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden">
+                <div
+                    class="absolute -right-4 -top-4 w-24 h-24 bg-blue-50/50 rounded-full group-hover:scale-150 transition-transform duration-500">
                 </div>
-                <div class="p-3 rounded-lg bg-orange-50">
-                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+                <div class="relative flex items-center gap-4">
+                    <div class="p-4 bg-blue-600 text-white rounded-2xl shadow-lg shadow-blue-200">
+                        <i class="fas fa-file-invoice text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-400 uppercase tracking-wide">Assignées</p>
+                        <p class="text-3xl font-black text-gray-900">{{ $stats['recommandations_assignees'] }}</p>
+                    </div>
                 </div>
-            </div>
-        </div>
-
-        <!-- En retard -->
-        <div class="p-6 transition-shadow duration-300 bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">En Retard</p>
-                    <p class="mt-2 text-3xl font-bold text-red-600">{{ $stats['recommandations_retard'] }}</p>
-                    <p class="mt-1 text-xs text-gray-500">Délai dépassé</p>
-                </div>
-                <div class="p-3 rounded-lg bg-red-50">
-                    <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
+                <div class="mt-4 flex items-center text-xs font-medium text-gray-500 bg-gray-50 p-2 rounded-lg">
+                    <i class="fas fa-info-circle mr-2 text-blue-500"></i>
+                    Total des recommandations à traiter
                 </div>
             </div>
-        </div>
 
-        <!-- Taux validation -->
-        <div class="p-6 transition-shadow duration-300 bg-white border border-gray-100 shadow-sm rounded-xl hover:shadow-md">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm font-medium text-gray-600">Taux Validation</p>
-                    <p class="mt-2 text-3xl font-bold text-green-600">{{ $stats['taux_validation'] }}%</p>
-                    <p class="mt-1 text-xs text-gray-500">Plans validés</p>
-                </div>
-                <div class="p-3 rounded-lg bg-green-50">
-                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- ==================== ACTIONS RAPIDES ==================== -->
-    <div class="p-6 bg-white border border-gray-100 shadow-sm rounded-xl">
-        <h3 class="mb-4 text-lg font-semibold text-gray-900">Actions Rapides</h3>
-        <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <!-- En attente de validation -->
             <a href="{{ route('responsable.validation_plans.index') }}"
-               class="flex items-center justify-center p-4 transition-colors rounded-lg bg-orange-50 hover:bg-orange-100 group">
-                <div class="text-center">
-                    <svg class="w-8 h-8 mx-auto text-orange-600 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                    <p class="mt-2 font-medium text-orange-600">Valider Plans</p>
-                    <p class="text-sm text-orange-500">{{ $stats['plans_en_attente'] }} en attente</p>
+                class="relative group bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden">
+                <div
+                    class="absolute -right-4 -top-4 w-24 h-24 bg-amber-50/50 rounded-full group-hover:scale-150 transition-transform duration-500">
+                </div>
+                <div class="relative flex items-center gap-4">
+                    <div class="p-4 bg-amber-500 text-white rounded-2xl shadow-lg shadow-amber-200">
+                        <i class="fas fa-clipboard-check text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-400 uppercase tracking-wide">À Valider</p>
+                        <p class="text-3xl font-black text-gray-900">{{ $stats['recommandations_attente'] }}</p>
+                    </div>
+                </div>
+                <div
+                    class="mt-4 flex items-center text-xs font-medium text-amber-600 bg-amber-50 p-2 rounded-lg group-hover:bg-amber-100 transition-colors">
+                    <i class="fas fa-arrow-right mr-2"></i>
+                    Action requise par vous
                 </div>
             </a>
 
-            <a href="{{ route('responsable.points_focaux.index') }}"
-               class="flex items-center justify-center p-4 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100 group">
-                <div class="text-center">
-                    <svg class="w-8 h-8 mx-auto text-blue-600 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/>
-                    </svg>
-                    <p class="mt-2 font-medium text-blue-600">Points Focaux</p>
-                    <p class="text-sm text-blue-500">Gérer les affectations</p>
+            <!-- En Retard -->
+            <div
+                class="relative group bg-white p-6 rounded-3xl border border-gray-100 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 overflow-hidden">
+                <div
+                    class="absolute -right-4 -top-4 w-24 h-24 bg-rose-50/50 rounded-full group-hover:scale-150 transition-transform duration-500">
                 </div>
-            </a>
-
-            <a href="{{ route('responsable.suivi.index') }}"
-               class="flex items-center justify-center p-4 transition-colors rounded-lg bg-purple-50 hover:bg-purple-100 group">
-                <div class="text-center">
-                    <svg class="w-8 h-8 mx-auto text-purple-600 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-                    </svg>
-                    <p class="mt-2 font-medium text-purple-600">Suivi Global</p>
-                    <p class="text-sm text-purple-500">Voir toutes les activités</p>
+                <div class="relative flex items-center gap-4">
+                    <div class="p-4 bg-rose-600 text-white rounded-2xl shadow-lg shadow-rose-200 animate-pulse-slow">
+                        <i class="fas fa-clock text-xl"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-gray-400 uppercase tracking-wide">En Retard</p>
+                        <p class="text-3xl font-black text-gray-900">{{ $stats['recommandations_retard'] }}</p>
+                    </div>
                 </div>
-            </a>
-        </div>
-    </div>
-
-    <!-- ==================== ACTIVITÉS RÉCENTES ==================== -->
-    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <!-- Plans en attente -->
-        <div class="p-6 bg-white border border-gray-100 shadow-sm rounded-xl">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-semibold text-gray-900">Plans en Attente de Validation</h3>
-                <span class="text-sm font-medium text-orange-600">{{ $plansEnAttente->count() }} plans</span>
+                <div class="mt-4 flex items-center text-xs font-medium text-rose-600 bg-rose-50 p-2 rounded-lg">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Délai de mise en œuvre dépassé
+                </div>
             </div>
-            <div class="space-y-4">
-                @forelse($plansEnAttente as $plan)
-                <div class="flex items-start p-3 space-x-3 transition-colors rounded-lg hover:bg-gray-50">
-                    <div class="flex-shrink-0 w-2 h-2 mt-2 bg-orange-500 rounded-full"></div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 truncate">
-                            {{ $plan->recommandation->titre ?? 'Recommandation inconnue' }}
-                        </p>
-                        <p class="mt-1 text-xs text-gray-500">
-                            Point focal: {{ $plan->pointFocal->name ?? 'Non assigné' }}
-                        </p>
-                        <div class="flex items-center mt-2 space-x-2">
-                            <span class="text-xs text-gray-500">
-                                Soumis le {{ $plan->created_at->format('d/m/Y') }}
-                            </span>
-                            <a href="{{ route('responsable.validation_plans.show', $plan) }}"
-                               class="text-xs text-blue-600 hover:text-blue-900">
-                                Examiner
-                            </a>
+        </div>
+
+        <!-- ==================== MAIN SECTION: TWO BLOCKS ==================== -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- BLOCK 1: VALIDATION WAITLIST (2/3) -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- DASHBOARD ACTIONS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <a href="{{ route('responsable.suivi.index') }}"
+                        class="group bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5 hover:border-purple-200 transition-all">
+                        <div
+                            class="w-14 h-14 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center text-xl group-hover:bg-purple-600 group-hover:text-white transition-all">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900">Suivi d'Exécution</h4>
+                            <p class="text-xs text-gray-400 mt-0.5">Piloter l'avancement des recommandations</p>
+                        </div>
+                    </a>
+                    <a href="{{ route('responsable.points_focaux.index') }}"
+                        class="group bg-white p-6 rounded-3xl shadow-sm border border-gray-100 flex items-center gap-5 hover:border-indigo-200 transition-all">
+                        <div
+                            class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-xl group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-gray-900">Équipe Points Focaux</h4>
+                            <p class="text-xs text-gray-400 mt-0.5">Gérer les accès et affectations</p>
+                        </div>
+                    </a>
+                </div>
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 min-h-[400px]">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <h3 class="text-xl font-bold text-gray-900">Missions prêtes pour validation</h3>
+                            <p class="text-sm text-gray-500 mt-1 italic">Dernières recommandations soumises par vos points
+                                focaux</p>
+                        </div>
+                        <a href="{{ route('responsable.validation_plans.index') }}"
+                            class="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center group">
+                            Voir tout
+                            <i class="fas fa-chevron-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                        </a>
+                    </div>
+
+                    <div class="space-y-4">
+                        @forelse($recommandationsAttente as $reco)
+                            <div
+                                class="group relative flex items-center p-5 bg-gray-50 rounded-2xl border border-transparent hover:border-blue-200 hover:bg-white transition-all cursor-default">
+                                <div
+                                    class="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-blue-600 mr-4 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                                    <i class="fas fa-file-alt"></i>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span
+                                            class="bg-blue-100 text-blue-700 text-[10px] font-black uppercase px-2 py-0.5 rounded-full">{{ $reco->reference }}</span>
+                                        <span class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Le
+                                            {{ $reco->updated_at->format('d/m/Y') }}</span>
+                                    </div>
+                                    <h4
+                                        class="text-sm font-bold text-gray-900 truncate group-hover:text-blue-700 transition-colors">
+                                        {{ $reco->titre }}</h4>
+                                    <p class="text-xs text-gray-500 flex items-center mt-1">
+                                        <i class="fas fa-user-circle mr-1.5 opacity-50"></i>
+                                        PF: <span class="font-bold text-gray-700 ml-1">{{ $reco->pointFocal->name }}</span>
+                                    </p>
+                                </div>
+                                <a href="{{ route('responsable.validation_plans.dossier', $reco) }}"
+                                    class="ml-4 px-4 py-2 bg-blue-600 text-white text-[10px] font-black uppercase tracking-wider rounded-full hover:bg-blue-700 transition-colors shadow-lg shadow-blue-100">
+                                    Analyser
+                                </a>
+                            </div>
+                        @empty
+                            <div class="py-16 text-center">
+                                <div
+                                    class="w-20 h-20 bg-gray-50 rounded-3xl mx-auto flex items-center justify-center mb-4 border border-dashed border-gray-200">
+                                    <i class="fas fa-check-double text-gray-300 text-2xl"></i>
+                                </div>
+                                <p class="text-gray-400 font-medium italic">Aucune recommandation en attente de validation.</p>
+                                <p class="text-xs text-gray-300 mt-1">Tout est à jour !</p>
+                            </div>
+                        @endforelse
+                    </div>
+                </div>                
+            </div>
+
+            <!-- BLOCK 2: STATISTICS & RECENT (1/3) -->
+            <div class="space-y-8">
+                <!-- REPARTITION PAR PRIORITE -->
+                <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
+                    <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                        <i class="fas fa-filter mr-2 text-gray-400"></i>
+                        Répartition par Priorité
+                    </h3>
+
+                    <div class="space-y-5">
+                        <!-- Haute -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-bold text-rose-600 uppercase tracking-widest flex items-center">
+                                    <span class="w-2 h-2 bg-rose-600 rounded-full mr-2"></span>
+                                    Haute
+                                </span>
+                                <span class="font-black text-gray-900">{{ $stats['par_priorite']['haute'] }}</span>
+                            </div>
+                            <div class="h-2 bg-gray-50 rounded-full overflow-hidden">
+                                <div class="h-full bg-rose-600 rounded-full transition-all duration-1000 ease-out"
+                                    style="width: {{ $stats['recommandations_assignees'] > 0 ? ($stats['par_priorite']['haute'] / $stats['recommandations_assignees'] * 100) : 0 }}%">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Moyenne -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-bold text-amber-500 uppercase tracking-widest flex items-center">
+                                    <span class="w-2 h-2 bg-amber-500 rounded-full mr-2"></span>
+                                    Moyenne
+                                </span>
+                                <span class="font-black text-gray-900">{{ $stats['par_priorite']['moyenne'] }}</span>
+                            </div>
+                            <div class="h-2 bg-gray-50 rounded-full overflow-hidden">
+                                <div class="h-full bg-amber-500 rounded-full transition-all duration-1000 ease-out"
+                                    style="width: {{ $stats['recommandations_assignees'] > 0 ? ($stats['par_priorite']['moyenne'] / $stats['recommandations_assignees'] * 100) : 0 }}%">
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Basse -->
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-center text-xs">
+                                <span class="font-bold text-emerald-500 uppercase tracking-widest flex items-center">
+                                    <span class="w-2 h-2 bg-emerald-500 rounded-full mr-2"></span>
+                                    Basse
+                                </span>
+                                <span class="font-black text-gray-900">{{ $stats['par_priorite']['basse'] }}</span>
+                            </div>
+                            <div class="h-2 bg-gray-50 rounded-full overflow-hidden">
+                                <div class="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
+                                    style="width: {{ $stats['recommandations_assignees'] > 0 ? ($stats['par_priorite']['basse'] / $stats['recommandations_assignees'] * 100) : 0 }}%">
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                @empty
-                <div class="py-8 text-center text-gray-500">
-                    <svg class="w-12 h-12 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <p class="mt-2">Aucun plan en attente</p>
-                </div>
-                @endforelse
-            </div>
-        </div>
 
-        <!-- Recommandations récentes -->
-        <div class="p-6 bg-white border border-gray-100 shadow-sm rounded-xl">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-lg font-semibold text-gray-900">Recommandations Récentes</h3>
-                <span class="text-sm font-medium text-blue-600">{{ $recommandationsRecentes->count() }} activités</span>
-            </div>
-            <div class="space-y-4">
-                @forelse($recommandationsRecentes as $recommandation)
-                <div class="flex items-start p-3 space-x-3 transition-colors rounded-lg hover:bg-gray-50">
-                    <div class="flex-shrink-0 w-2 h-2 mt-2 bg-blue-500 rounded-full"></div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-medium text-gray-900 truncate">
-                            {{ $recommandation->titre }}
-                        </p>
-                        <p class="mt-1 text-xs text-gray-500">
-                            {{ $recommandation->its->name ?? 'Inspecteur ITS' }}
-                            @if($recommandation->pointFocal)
-                            • PF: {{ $recommandation->pointFocal->name }}
-                            @endif
-                        </p>
-                        <div class="flex items-center mt-2 space-x-2">
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium
-                                @if($recommandation->statut == 'point_focal_assigne') bg-green-100 text-green-800
-                                @elseif($recommandation->statut == 'plan_en_redaction') bg-blue-100 text-blue-800
-                                @else bg-yellow-100 text-yellow-800
-                                @endif">
-                                {{ str_replace('_', ' ', $recommandation->statut) }}
-                            </span>
-                            @if($recommandation->date_limite)
-                            <span class="text-xs text-gray-500">
-                                Échéance: {{ $recommandation->date_limite->format('d/m/Y') }}
-                            </span>
-                            @endif
-                        </div>
+                <!-- ACTIVITES RECENTES -->
+                <div class="bg-gray-900 p-8 rounded-3xl shadow-xl shadow-gray-200">
+                    <h3 class="text-lg font-bold text-white mb-6">Activités Récentes</h3>
+                    <div class="space-y-6">
+                        @forelse($recommandationsRecentes as $rec)
+                            <div class="relative pl-6 pb-2 border-l border-gray-800 last:border-0">
+                                <div
+                                    class="absolute -left-[5px] top-0 w-[9px] h-[9px] rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)]">
+                                </div>
+                                <p class="text-[10px] font-black text-gray-500 uppercase tracking-widest mb-1">
+                                    {{ $rec->updated_at->diffForHumans() }}
+                                </p>
+                                <h4 class="text-xs font-bold text-gray-100 line-clamp-1 mb-1">{{ $rec->titre }}</h4>
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        class="text-[9px] font-bold px-1.5 py-0.5 bg-gray-800 text-gray-400 rounded uppercase tracking-tighter">
+                                        {{ str_replace('_', ' ', $rec->statut) }}
+                                    </span>
+                                    @if($rec->plansAction->count() > 0)
+                                        @php
+                                            $avg = round($rec->plansAction->avg('pourcentage_avancement'));
+                                        @endphp
+                                        <div class="flex items-center gap-1.5 bg-white/5 px-1.5 py-0.5 rounded">
+                                            <div class="w-10 h-1 bg-gray-800 rounded-full overflow-hidden">
+                                                <div class="h-full bg-blue-500" style="width: {{ $avg }}%"></div>
+                                            </div>
+                                            <span class="text-[9px] font-black text-blue-400">{{ $avg }}%</span>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-gray-600 text-xs italic text-center">Aucun mouvement récent.</p>
+                        @endforelse
                     </div>
                 </div>
-                @empty
-                <div class="py-8 text-center text-gray-500">
-                    <svg class="w-12 h-12 mx-auto text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                    </svg>
-                    <p class="mt-2">Aucune recommandation récente</p>
-                </div>
-                @endforelse
             </div>
         </div>
     </div>
-</div>
+
+    <style>
+        @keyframes pulse-slow {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: scale(0.95);
+            }
+        }
+
+        .animate-pulse-slow {
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+    </style>
 @endsection

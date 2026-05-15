@@ -18,6 +18,7 @@ Route::prefix('point-focal')->middleware(['auth'])->name('point_focal.')->group(
     Route::get('/recommandations/{recommandation}/edit', [RecommandationController::class, 'edit'])->name('recommandations.edit');
     Route::put('/recommandations/{recommandation}', [RecommandationController::class, 'update'])->name('recommandations.update');
     Route::post('/recommandations/{recommandation}/soumettre-planification', [RecommandationController::class, 'soumettrePlanification'])->name('recommandations.soumettre_planification');
+    Route::post('/recommandations/{recommandation}/rappel', [RecommandationController::class, 'rappel'])->name('recommandations.rappel');
 
     // Plans d'action
     Route::get('/plans-action', [PlanActionController::class, 'index'])->name('plans_action.index');
@@ -32,6 +33,7 @@ Route::prefix('point-focal')->middleware(['auth'])->name('point_focal.')->group(
     Route::get('/avancement', [AvancementController::class, 'index'])->name('avancement.index');
     Route::get('/avancement/{recommandation}', [AvancementController::class, 'show'])->name('avancement.show');
     Route::put('/avancement/action/{planAction}', [AvancementController::class, 'updateAction'])->name('avancement.update_action');
+    Route::post('/avancement/action/{planAction}/unlock', [AvancementController::class, 'unlockAction'])->name('avancement.unlock_action');
     Route::post('/avancement/{recommandation}/cloture', [AvancementController::class, 'demanderCloture'])->name('avancement.cloture');
     Route::post('/avancement/{recommandation}/rappel', [AvancementController::class, 'rappel'])->name('avancement.rappel');
     

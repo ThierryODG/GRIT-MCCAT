@@ -3,321 +3,270 @@
 @section('title', 'Modifier la Recommandation')
 
 @section('content')
-<div class="min-h-screen py-8 bg-gray-50">
-    <div class="max-w-4xl mx-auto">
-        <!-- En-tête de page -->
-        <div class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-gray-900">Modifier la Recommandation</h1>
-            <p class="mt-2 text-lg text-gray-600">{{ $recommandation->reference }}</p>
-        </div>
-
-        <!-- Carte du formulaire -->
-        <div class="overflow-hidden bg-white shadow-xl rounded-2xl">
-            <div class="px-8 py-6 border-b border-gray-200">
-                <div class="flex items-center">
-                    <div class="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg">
-                        <i class="text-blue-600 fas fa-edit"></i>
-                    </div>
-                    <div class="ml-4">
-                        <h2 class="text-xl font-semibold text-gray-800">Modification de la recommandation</h2>
-                        <p class="text-sm text-gray-500">Mettez à jour les informations de la recommandation</p>
-                    </div>
+    <div class="min-h-screen py-10 bg-[#F8FAFC]">
+        <div class="max-w-5xl mx-auto px-4">
+            <!-- En-tête -->
+            <div class="mb-10 flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-extrabold text-[#1E293B] tracking-tight">Modifier la Recommandation</h1>
+                    <p class="mt-2 text-gray-500 font-medium">{{ $recommandation->reference }}</p>
                 </div>
+                <a href="{{ route('its.recommandations.show', $recommandation) }}"
+                    class="inline-flex items-center px-4 py-2 bg-white border border-gray-200 rounded-xl text-sm font-bold text-gray-700 hover:bg-gray-50 transition-all shadow-sm">
+                    <i class="fas fa-times mr-2"></i> Annuler
+                </a>
             </div>
 
-            <form action="{{ route('its.recommandations.update', $recommandation) }}" method="POST" class="p-8 space-y-8">
+            <form action="{{ route('its.recommandations.update', $recommandation) }}" method="POST"
+                enctype="multipart/form-data" class="space-y-8">
                 @csrf
                 @method('PUT')
 
-                <!-- Bannière d'information sur le statut -->
-                <div class="p-4 rounded-lg border
-                    @if($recommandation->statut == 'brouillon') bg-yellow-50 border-yellow-200
-                    @elseif($recommandation->statut == 'rejetee_ig') bg-red-50 border-red-200
-                    @else bg-blue-50 border-blue-200 @endif">
-                    <div class="flex items-start">
-                        <i class="mt-1 mr-3
-                            @if($recommandation->statut == 'brouillon') text-yellow-500 fas fa-edit
-                            @elseif($recommandation->statut == 'rejetee_ig') text-red-500 fas fa-exclamation-triangle
-                            @else text-blue-500 fas fa-info-circle @endif"></i>
-                        <div>
-                            <h3 class="font-semibold
-                                @if($recommandation->statut == 'brouillon') text-yellow-800
-                                @elseif($recommandation->statut == 'rejetee_ig') text-red-800
-                                @else text-blue-800 @endif">
-                                Statut actuel : {{ $recommandation->statut_label }}
+                <!-- Bannière Statut/Rejet -->
+                @if($recommandation->statut == 'rejetee_ig')
+                    <div
+                        class="bg-red-50 p-6 rounded-2xl border border-red-100 mb-8 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div class="flex space-x-4">
+                            <div class="bg-red-100 p-3 rounded-xl h-fit">
+                                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-bold text-red-900">Recommandation rejetée par l'IG</h3>
+                                <p class="text-red-700 font-medium mt-1">
+                                    {{ $recommandation->motif_rejet_ig ?? 'Veuillez prendre en compte les remarques de l\'Inspecteur Général.' }}
+                                </p>
+                                @if($recommandation->commentaire_ig)
+                                    <div class="mt-3 p-3 bg-white/50 rounded-lg text-sm italic text-red-800 border border-red-100">
+                                        "{{ $recommandation->commentaire_ig }}"
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Colonne Gauche : Paramètres -->
+                    <div class="lg:col-span-1 space-y-6">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400 mb-6 flex items-center">
+                                <i class="fas fa-cog mr-2"></i> Paramètres
                             </h3>
-                            <p class="mt-1 text-sm
-                                @if($recommandation->statut == 'brouillon') text-yellow-700
-                                @elseif($recommandation->statut == 'rejetee_ig') text-red-700
-                                @else text-blue-700 @endif">
-                                @if($recommandation->statut == 'brouillon')
-                                    Cette recommandation est en brouillon. Vous pouvez la modifier et la soumettre à l'IG quand elle sera prête.
-                                @elseif($recommandation->statut == 'rejetee_ig')
-                                    Cette recommandation a été rejetée par l'Inspecteur Général. Vous pouvez la modifier et la resoumettre.
-                                @else
-                                    Vous pouvez modifier cette recommandation selon les règles de votre workflow.
-                                @endif
-                            </p>
+
+                            <!-- Structure -->
+                            <div class="space-y-2 mb-6">
+                                <label for="structure_id"
+                                    class="text-xs font-bold text-gray-700 uppercase tracking-widest">Structure destinataire
+                                    <span class="text-red-500">*</span></label>
+                                <select id="structure_id" name="structure_id" required
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium">
+                                    @foreach($structures as $structure)
+                                        <option value="{{ $structure->id }}" {{ old('structure_id', $recommandation->structure_id) == $structure->id ? 'selected' : '' }}>
+                                            {{ $structure->nom }} ({{ $structure->sigle }})
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Priorité -->
+                            <div class="space-y-2 mb-6">
+                                <label for="priorite"
+                                    class="text-xs font-bold text-gray-700 uppercase tracking-widest">Priorité <span
+                                        class="text-red-500">*</span></label>
+                                <select id="priorite" name="priorite" required
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium">
+                                    <option value="basse" {{ old('priorite', $recommandation->priorite) == 'basse' ? 'selected' : '' }}>🟢 Basse</option>
+                                    <option value="moyenne" {{ old('priorite', $recommandation->priorite) == 'moyenne' ? 'selected' : '' }}>🟡 Moyenne</option>
+                                    <option value="haute" {{ old('priorite', $recommandation->priorite) == 'haute' ? 'selected' : '' }}>🔴 Haute</option>
+                                </select>
+                            </div>
+
+                            <!-- Date Limite -->
+                            <div class="space-y-2">
+                                <label for="date_limite"
+                                    class="text-xs font-bold text-gray-700 uppercase tracking-widest">Date limite <span
+                                        class="text-red-500">*</span></label>
+                                <input type="date" id="date_limite" name="date_limite"
+                                    value="{{ old('date_limite', $recommandation->date_limite->format('Y-m-d')) }}"
+                                    min="{{ date('Y-m-d', strtotime('+1 day')) }}" required
+                                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium">
+                            </div>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100">
+                            <div class="flex items-center space-x-3 text-blue-900 mb-2">
+                                <i class="fas fa-history text-sm"></i>
+                                <h4 class="text-sm font-bold">Historique</h4>
+                            </div>
+                            <div class="text-[11px] text-blue-700 space-y-1">
+                                <p>Créée le : <span
+                                        class="font-bold">{{ $recommandation->created_at->format('d/m/Y') }}</span></p>
+                                <p>Dernier update : <span
+                                        class="font-bold">{{ $recommandation->updated_at->format('d/m/Y') }}</span></p>
+                                <p>Statut : <span
+                                        class="uppercase font-extrabold">{{ $recommandation->statut_label }}</span></p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Structure -->
-                <div class="space-y-4">
-                    <label for="structure_id" class="block text-sm font-medium text-gray-700">
-                        <span class="flex items-center">
-                            Structure destinataire
-                            <span class="ml-1 text-red-500">*</span>
-                        </span>
-                    </label>
-                    <select id="structure_id" name="structure_id" required
-                            class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 @error('structure_id') border-red-500 @enderror">
-                        <option value="" class="text-gray-400">Sélectionnez une structure</option>
-                        @foreach($structures as $structure)
-                            <option value="{{ $structure->id }}" {{ old('structure_id', $recommandation->structure_id) == $structure->id ? 'selected' : '' }}
-                                    class="text-gray-700">
-                                {{ $structure->nom }} ({{ $structure->sigle }})
-                            </option>
-                        @endforeach
-                    </select>
-                    @error('structure_id')
-                        <p class="flex items-center mt-2 text-sm text-red-600">
-                            <i class="mr-1 fas fa-exclamation-circle"></i>
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </div>
+                    <!-- Colonne Droite : Contenu -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                            <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400 mb-6 flex items-center">
+                                <i class="fas fa-edit mr-2"></i> Détails du contenu
+                            </h3>
 
-                <!-- Titre -->
-                <div class="space-y-4">
-                    <label for="titre" class="block text-sm font-medium text-gray-700">
-                        <span class="flex items-center">
-                            Titre de la recommandation
-                            <span class="ml-1 text-red-500">*</span>
-                        </span>
-                    </label>
-                    <input type="text" id="titre" name="titre" value="{{ old('titre', $recommandation->titre) }}"
-                           required
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 @error('titre') border-red-500 @enderror"
-                           placeholder="Ex: Renforcement des capacités techniques du personnel...">
-                    @error('titre')
-                        <p class="flex items-center mt-2 text-sm text-red-600">
-                            <i class="mr-1 fas fa-exclamation-circle"></i>
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </div>
+                            <!-- Titre -->
+                            <div class="space-y-2 mb-8">
+                                <label for="titre" class="text-xs font-bold text-gray-700 uppercase tracking-widest">Titre
+                                    <span class="text-red-500">*</span></label>
+                                <input type="text" id="titre" name="titre"
+                                    value="{{ old('titre', $recommandation->titre) }}" required
+                                    class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all text-lg font-bold placeholder:text-gray-300">
+                            </div>
 
-                <!-- Description -->
-                <div class="space-y-4">
-                    <label for="description" class="block text-sm font-medium text-gray-700">
-                        <span class="flex items-center">
-                            Description détaillée
-                            <span class="ml-1 text-red-500">*</span>
-                        </span>
-                    </label>
-                    <textarea id="description" name="description" rows="6"
-                              required
-                              class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 resize-vertical @error('description') border-red-500 @enderror"
-                              placeholder="Décrivez précisément le problème identifié, le contexte de la recommandation et les résultats attendus...">{{ old('description', $recommandation->description) }}</textarea>
-                    @error('description')
-                        <p class="flex items-center mt-2 text-sm text-red-600">
-                            <i class="mr-1 fas fa-exclamation-circle"></i>
-                            {{ $message }}
-                        </p>
-                    @enderror
-                </div>
-
-                <!-- Priorité et Date limite -->
-                <div class="grid grid-cols-1 gap-8 md:grid-cols-2">
-                    <!-- Priorité -->
-                    <div class="space-y-4">
-                        <label for="priorite" class="block text-sm font-medium text-gray-700">
-                            <span class="flex items-center">
-                                Niveau de priorité
-                                <span class="ml-1 text-red-500">*</span>
-                            </span>
-                        </label>
-                        <select id="priorite" name="priorite" required
-                                class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 @error('priorite') border-red-500 @enderror">
-                            <option value="" class="text-gray-400">Choisissez une priorité</option>
-                            <option value="haute" {{ old('priorite', $recommandation->priorite) == 'haute' ? 'selected' : '' }} class="font-medium text-red-600">🔴 Haute priorité</option>
-                            <option value="moyenne" {{ old('priorite', $recommandation->priorite) == 'moyenne' ? 'selected' : '' }} class="font-medium text-yellow-600">🟡 Priorité moyenne</option>
-                            <option value="basse" {{ old('priorite', $recommandation->priorite) == 'basse' ? 'selected' : '' }} class="font-medium text-green-600">🟢 Priorité basse</option>
-                        </select>
-                        @error('priorite')
-                            <p class="flex items-center mt-2 text-sm text-red-600">
-                                <i class="mr-1 fas fa-exclamation-circle"></i>
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
-
-                    <!-- Date limite -->
-                    <div class="space-y-4">
-                        <label for="date_limite" class="block text-sm font-medium text-gray-700">
-                            <span class="flex items-center">
-                                Date limite d'exécution
-                                <span class="ml-1 text-red-500">*</span>
-                            </span>
-                        </label>
-                        <div class="relative">
-                            <input type="date" id="date_limite" name="date_limite"
-                                   value="{{ old('date_limite', $recommandation->date_limite->format('Y-m-d')) }}"
-                                   min="{{ date('Y-m-d', strtotime('+1 day')) }}"
-                                   required
-                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200 @error('date_limite') border-red-500 @enderror">
-                            <i class="absolute text-gray-400 transform -translate-y-1/2 pointer-events-none fas fa-calendar-alt right-4 top-1/2"></i>
+                            <!-- Description -->
+                            <div class="space-y-2">
+                                <label for="description"
+                                    class="text-xs font-bold text-gray-700 uppercase tracking-widest">Description détaillée
+                                    <span class="text-red-500">*</span></label>
+                                <textarea id="description" name="description" rows="10" required
+                                    class="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 transition-all text-sm font-medium leading-relaxed resize-none">{{ old('description', $recommandation->description) }}</textarea>
+                            </div>
                         </div>
-                        @error('date_limite')
-                            <p class="flex items-center mt-2 text-sm text-red-600">
-                                <i class="mr-1 fas fa-exclamation-circle"></i>
-                                {{ $message }}
-                            </p>
-                        @enderror
-                    </div>
-                </div>
 
-                <!-- Informations de suivi -->
-                <div class="grid grid-cols-1 gap-6 p-6 rounded-lg bg-gray-50 md:grid-cols-2">
-                    <div>
-                        <h4 class="font-medium text-gray-700">Informations de création</h4>
-                        <div class="mt-2 space-y-1 text-sm text-gray-600">
-                            <p><span class="font-medium">Référence :</span> {{ $recommandation->reference }}</p>
-                            <p><span class="font-medium">Créée le :</span> {{ $recommandation->created_at->format('d/m/Y à H:i') }}</p>
-                            <p><span class="font-medium">Dernière modification :</span> {{ $recommandation->updated_at->format('d/m/Y à H:i') }}</p>
-                        </div>
-                    </div>
-                    <div>
-                        <h4 class="font-medium text-gray-700">État actuel</h4>
-                        <div class="mt-2 space-y-1 text-sm text-gray-600">
-                            <p><span class="font-medium">Statut :</span>
-                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium rounded-full
-                                    @if($recommandation->statut == 'brouillon') bg-yellow-100 text-yellow-800
-                                    @elseif($recommandation->statut == 'rejetee_ig') bg-red-100 text-red-800
-                                    @else bg-blue-100 text-blue-800 @endif">
-                                    {{ $recommandation->statut_label }}
-                                </span>
-                            </p>
-                            <p><span class="font-medium">Jours restants :</span>
-                                @php
-                                    // Calcul précis des jours restants (sans décimales)
-                                    $aujourdhui = now()->startOfDay();
-                                    $dateLimite = $recommandation->date_limite->startOfDay();
-                                    $joursRestants = $aujourdhui->diffInDays($dateLimite, false);
-                                @endphp
-                                @if($joursRestants < 0)
-                                    <span class="font-medium text-red-600">En retard ({{ abs($joursRestants) }} jours)</span>
-                                @elseif($joursRestants == 0)
-                                    <span class="font-medium text-orange-600">Aujourd'hui</span>
-                                @else
-                                    <span class="text-green-600">{{ $joursRestants }} jours</span>
-                                @endif
-                            </p>
-                        </div>
-                    </div>
-                </div>
+                        <!-- Documents Existants -->
+                        @if($recommandation->documents->count() > 0)
+                            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                                <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400 mb-6 flex items-center">
+                                    <i class="fas fa-file-alt mr-2"></i> Documents actuels
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    @foreach($recommandation->documents as $doc)
+                                        <div
+                                            class="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-xl">
+                                            <div class="flex items-center space-x-3 overflow-hidden">
+                                                <i class="fas fa-file-pdf text-red-500"></i>
+                                                <span
+                                                    class="text-xs font-bold text-gray-700 truncate">{{ $doc->description ?? $doc->file_name }}</span>
+                                            </div>
+                                            <div class="flex space-x-2">
+                                                <a href="{{ Storage::url($doc->file_path) }}" target="_blank"
+                                                    class="text-gray-400 hover:text-blue-600 transition-colors">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                                <button type="button" class="text-gray-400 hover:text-red-600 transition-colors">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
 
-                <!-- Actions -->
-                <div class="flex justify-between pt-6 space-x-4 border-t border-gray-200">
-                    <div>
-                        <!-- Bouton supprimer seulement pour les brouillons -->
-                        @if($recommandation->statut === 'brouillon')
-                        <form action="{{ route('its.recommandations.destroy', $recommandation) }}" method="POST" class="inline">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette recommandation ?')"
-                                    class="px-6 py-3 font-medium text-white transition duration-200 bg-red-600 rounded-lg shadow-sm hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
-                                <i class="mr-2 fas fa-trash"></i>Supprimer
+                        <!-- Ajouter des Documents -->
+                        <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400 flex items-center">
+                                    <i class="fas fa-paperclip mr-2"></i> Ajouter des pièces jointes
+                                </h3>
+                                <button type="button" id="add-document-btn"
+                                    class="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center bg-blue-50 px-3 py-1.5 rounded-lg transition-colors">
+                                    <i class="fas fa-plus mr-1"></i> Nouveau fichier
+                                </button>
+                            </div>
+                            <div id="documents-container" class="space-y-4">
+                                <!-- JS Row Injection -->
+                            </div>
+                        </div>
+
+                        <!-- Actions de validation -->
+                        <div class="flex flex-col md:flex-row gap-4 pt-6">
+                            <a href="{{ route('its.recommandations.show', $recommandation) }}"
+                                class="px-8 py-4 bg-gray-100 hover:bg-gray-200 text-gray-500 rounded-2xl font-bold text-sm tracking-widest uppercase transition-all text-center">
+                                Annuler
+                            </a>
+
+                            @if($recommandation->statut === 'brouillon')
+                                <button type="submit" name="action" value="save"
+                                    class="px-8 py-4 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-2xl font-bold text-sm tracking-widest uppercase transition-all shadow-sm">
+                                    Sauvegarder
+                                </button>
+                            @endif
+
+                            <button type="submit" name="action"
+                                value="{{ $recommandation->statut === 'rejetee_ig' ? 'resoumettre' : 'soumettre' }}"
+                                class="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-black text-sm tracking-widest uppercase transition-all shadow-lg hover:shadow-xl hover:translate-y-[-2px] active:scale-95 flex-grow">
+                                <i class="fas fa-paper-plane mr-2 opacity-60"></i>
+                                {{ $recommandation->statut === 'rejetee_ig' ? 'Modifier et Renvoyer' : 'Soumettre à l\'IG' }}
                             </button>
-                        </form>
-                        @endif
-                    </div>
-
-                    <div class="flex space-x-4">
-                        <a href="{{ route('its.recommandations.show', $recommandation) }}"
-                        class="px-6 py-3 font-medium text-gray-700 transition duration-200 bg-white border border-gray-300 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <i class="mr-2 fas fa-times"></i>Annuler
-                        </a>
-
-                        <!-- Bouton renvoyer seulement si rejeté -->
-                        @if($recommandation->statut === 'rejetee_ig')
-                        <button type="submit"
-                                name="action"
-                                value="resoumettre"
-                                class="px-8 py-3 font-medium text-white transition duration-200 bg-green-600 border border-transparent rounded-lg shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
-                            <i class="mr-2 fas fa-paper-plane"></i>Modifier et renvoyer
-                        </button>
-                        @endif
-
-                        <!-- Bouton soumettre seulement si brouillon -->
-                        @if($recommandation->statut === 'brouillon')
-                        <button type="submit"
-                                name="action"
-                                value="soumettre"
-                                class="px-8 py-3 font-medium text-white transition duration-200 bg-blue-600 border border-transparent rounded-lg shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-                            <i class="mr-2 fas fa-paper-plane"></i>Soumettre à l'IG
-                        </button>
-                        @endif
-
-                        <!-- Bouton sauvegarder seulement si brouillon -->
-                        @if($recommandation->statut === 'brouillon')
-                        <button type="submit"
-                                name="action"
-                                value="sauvegarder"
-                                class="px-8 py-3 font-medium text-white transition duration-200 bg-gray-600 border border-transparent rounded-lg shadow-sm hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                            <i class="mr-2 fas fa-save"></i>Sauvegarder
-                        </button>
-                        @endif
+                        </div>
                     </div>
                 </div>
             </form>
         </div>
     </div>
-</div>
 
-<script>
-    // Validation de la date
-    document.getElementById('date_limite').addEventListener('change', function() {
-        const selectedDate = new Date(this.value);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-
-        if (selectedDate <= today) {
-            alert('La date limite doit être postérieure à aujourd\'hui.');
-            this.value = '{{ $recommandation->date_limite->format('Y-m-d') }}';
-            this.focus();
-        }
-    });
-
-    // Animation des champs au focus
-    document.querySelectorAll('input, select, textarea').forEach(element => {
-        element.addEventListener('focus', function() {
-            this.parentElement.classList.add('ring-2', 'ring-blue-200');
+    <script>
+        // Gestion dynamique des documents
+        document.getElementById('add-document-btn').addEventListener('click', function () {
+            const container = document.getElementById('documents-container');
+            const newRow = document.createElement('div');
+            newRow.className = 'p-4 bg-gray-50 rounded-xl border border-gray-200 flex flex-col md:flex-row gap-4 document-row relative animate-in fade-in zoom-in-95 duration-200';
+            newRow.innerHTML = `
+                            <div class="flex-grow">
+                                <input type="file" name="documents[]" 
+                                    accept=".pdf,.jpg,.jpeg,.png,.docx,.xlsx"
+                                    class="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-white file:text-gray-700 hover:file:bg-gray-100 file:shadow-sm file:transition-all">
+                                <p class="text-[10px] text-gray-400 mt-1">Formats : PDF, JPG, PNG, DOCX, XLSX (Max 10Mo)</p>
+                            </div>
+                            <div class="flex-grow">
+                                <input type="text" name="documents_descriptions[]"
+                                    placeholder="Nom du document"
+                                    class="w-full px-4 py-2 bg-white border border-gray-200 rounded-xl text-xs font-medium focus:ring-1 focus:ring-blue-500 transition-all">
+                            </div>
+                            <button type="button" class="remove-doc text-gray-400 hover:text-red-500 transition-colors p-2" onclick="this.closest('.document-row').remove()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        `;
+            container.appendChild(newRow);
         });
 
-        element.addEventListener('blur', function() {
-            this.parentElement.classList.remove('ring-2', 'ring-blue-200');
+        // Validation des fichiers côté client
+        document.addEventListener('change', function (e) {
+            if (e.target && e.target.type === 'file' && e.target.name === 'documents[]') {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                const allowedExtensions = ['pdf', 'jpg', 'jpeg', 'png', 'docx', 'xlsx'];
+                const extension = file.name.split('.').pop().toLowerCase();
+                const maxSize = 10 * 1024 * 1024; // 10Mo
+
+                if (!allowedExtensions.includes(extension)) {
+                    alert('Format non supporté ! Veuillez sélectionner un fichier PDF, Image (JPG, PNG) ou Office (DOCX, XLSX).');
+                    e.target.value = '';
+                    return;
+                }
+
+                if (file.size > maxSize) {
+                    alert('Fichier trop lourd ! La taille maximale autorisée est de 10Mo.');
+                    e.target.value = '';
+                    return;
+                }
+            }
         });
-    });
-</script>
 
-<style>
-    .resize-vertical {
-        resize: vertical;
-        min-height: 120px;
-    }
-
-    /* Style personnalisé pour le select */
-    select {
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-        background-position: right 0.5rem center;
-        background-repeat: no-repeat;
-        background-size: 1.5em 1.5em;
-        padding-right: 2.5rem;
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
-    }
-</style>
+        // Validation de date
+        document.getElementById('date_limite').addEventListener('change', function () {
+            const selectedDate = new Date(this.value);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            if (selectedDate <= today) {
+                alert('La date limite doit être postérieure à aujourd\'hui.');
+                this.value = '{{ $recommandation->date_limite->format('Y-m-d') }}';
+            }
+        });
+    </script>
 @endsection

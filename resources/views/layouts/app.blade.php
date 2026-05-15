@@ -18,12 +18,16 @@
     <div class="flex h-screen">
         <!-- Sidebar Dynamique par Rôle -->
         @auth
-            @includeWhen(Auth::user()->isAdmin(), 'layouts.components.sidebar.admin-sidebar')
-            @includeWhen(Auth::user()->isITS(), 'layouts.components.sidebar.its-sidebar')
-            @includeWhen(Auth::user()->isInspecteurGeneral(), 'layouts.components.sidebar.inspecteur-general-sidebar')
-            @includeWhen(Auth::user()->isPointFocal(), 'layouts.components.sidebar.pointfocal-sidebar')
-            @includeWhen(Auth::user()->isResponsable(), 'layouts.components.sidebar.responsable-sidebar')
-            @includeWhen(Auth::user()->isCabinetMinistre(), 'layouts.components.sidebar.cabinet-ministre-sidebar')
+            @php
+                /** @var \App\Models\User $user */
+                $user = Auth::user();
+            @endphp
+            @includeWhen($user->isAdmin(), 'layouts.components.sidebar.admin-sidebar')
+            @includeWhen($user->isITS(), 'layouts.components.sidebar.its-sidebar')
+            @includeWhen($user->isInspecteurGeneral(), 'layouts.components.sidebar.inspecteur-general-sidebar')
+            @includeWhen($user->isPointFocal(), 'layouts.components.sidebar.pointfocal-sidebar')
+            @includeWhen($user->isResponsable(), 'layouts.components.sidebar.responsable-sidebar')
+            @includeWhen($user->isCabinetMinistre(), 'layouts.components.sidebar.cabinet-ministre-sidebar')
         @endauth
 
         <!-- Contenu Principal -->
@@ -32,6 +36,31 @@
 
             <main class="flex-1 overflow-y-auto bg-gray-50">
                 <div class="container px-6 py-8 mx-auto">
+                    <!-- Flash Messages -->
+                    @if(session('success'))
+                        <div class="p-4 mb-4 text-sm text-green-800 rounded-lg bg-green-50 border border-green-200 flex items-center"
+                            role="alert">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <div>{{ session('success') }}</div>
+                        </div>
+                    @endif
+
+                    @if(session('error'))
+                        <div class="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 border border-red-200 flex items-center"
+                            role="alert">
+                            <i class="fas fa-exclamation-circle mr-2"></i>
+                            <div>{{ session('error') }}</div>
+                        </div>
+                    @endif
+
+                    @if(session('warning'))
+                        <div class="p-4 mb-4 text-sm text-yellow-800 rounded-lg bg-yellow-50 border border-yellow-200 flex items-center"
+                            role="alert">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <div>{{ session('warning') }}</div>
+                        </div>
+                    @endif
+
                     {{ $slot ?? '' }}
                     @yield('content')
                 </div>

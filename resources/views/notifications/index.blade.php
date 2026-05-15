@@ -9,121 +9,119 @@
                 d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
                 clip-rule="evenodd"></path>
         </svg>
-        <span class="text-gray-500 font-medium">Centre de notifications</span>
+        <span class="text-gray-500 text-sm">Notifications</span>
     </li>
 @endsection
 
 @section('content')
-    <div class="max-w-4xl mx-auto space-y-8 py-6">
-
-        <!-- Header Section -->
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <div class="max-w-4xl mx-auto py-8 px-4">
+        <!-- Header -->
+        <div class="flex items-center justify-between mb-8 pb-4 border-b border-gray-100">
             <div>
-                <h1 class="text-3xl font-black text-gray-900 tracking-tight">Vos Notifications</h1>
-                <p class="text-gray-500 font-medium mt-1">Restez informé des dernières mises à jour de vos missions.</p>
+                <h1 class="text-2xl font-bold text-gray-800">Votre Centre de Notifications</h1>
+                <p class="text-gray-500 text-sm mt-1">Gérez vos alertes et mises à jour système.</p>
             </div>
 
             @if($notifications->count() > 0)
                 <form action="{{ route('notifications.markAllAsRead') }}" method="POST">
                     @csrf
                     <button type="submit"
-                        class="inline-flex items-center px-6 py-3 bg-white border border-gray-200 rounded-2xl text-sm font-bold text-gray-700 hover:bg-gray-50 hover:border-indigo-300 hover:text-indigo-600 shadow-sm transition-all duration-200">
-                        <i class="fas fa-check-double mr-2 text-xs"></i>
+                        class="text-sm font-semibold text-blue-600 hover:text-blue-700 flex items-center px-4 py-2 bg-blue-50 rounded-lg transition-colors">
+                        <i class="fas fa-check-double mr-2"></i>
                         Tout marquer comme lu
                     </button>
                 </form>
             @endif
         </div>
 
-        <!-- Notifications List -->
-        <div class="bg-white rounded-[2.5rem] border border-gray-100 shadow-xl shadow-gray-100/50 overflow-hidden">
-            <div class="divide-y divide-gray-50">
+        <!-- Notification List -->
+        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+            <div class="divide-y divide-gray-100">
                 @forelse($notifications as $notification)
-                    <div class="group relative p-8 hover:bg-indigo-50/20 transition-all duration-300 flex items-start 
-                            {{ $notification->read_at ? 'opacity-60' : 'bg-blue-50/10' }}">
-
-                        <!-- Decorative status dot for unread -->
+                    <div class="p-5 flex items-start gap-4 hover:bg-gray-50 transition-colors relative">
+                        <!-- Unread Marker -->
                         @if(!$notification->read_at)
-                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-indigo-600 rounded-r-full"></div>
+                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-blue-600"></div>
                         @endif
 
-                        <!-- Icon Container -->
-                        <div class="flex-shrink-0 mr-6">
-                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center shadow-lg transition-transform group-hover:scale-110
-                                    @if(($notification->data['type'] ?? '') === 'error') bg-rose-50 text-rose-600 
-                                    @elseif(($notification->data['type'] ?? '') === 'success') bg-emerald-50 text-emerald-600 
-                                    @else bg-indigo-50 text-indigo-600 @endif">
-
-                                @if(isset($notification->data['icon']))
-                                    <i class="fas 
-                                                @if($notification->data['icon'] === 'check-circle') fa-check-circle 
-                                                @elseif($notification->data['icon'] === 'x-circle') fa-times-circle 
-                                                @else fa-bell @endif text-xl"></i>
-                                @else
-                                    <i class="fas fa-bell text-xl"></i>
-                                @endif
-                            </div>
+                        <!-- Simple Icon -->
+                        <div class="flex-shrink-0 mt-1">
+                            @if(($notification->data['type'] ?? '') === 'error')
+                                <div class="w-10 h-10 rounded-full bg-red-50 text-red-500 flex items-center justify-center">
+                                    <i class="fas fa-exclamation-circle text-lg"></i>
+                                </div>
+                            @elseif(($notification->data['type'] ?? '') === 'success')
+                                <div class="w-10 h-10 rounded-full bg-green-50 text-green-500 flex items-center justify-center">
+                                    <i class="fas fa-check-circle text-lg"></i>
+                                </div>
+                            @else
+                                <div class="w-10 h-10 rounded-full bg-gray-50 text-gray-500 flex items-center justify-center">
+                                    <i class="fas fa-bell text-lg"></i>
+                                </div>
+                            @endif
                         </div>
 
-                        <!-- Content Section -->
+                        <!-- Content -->
                         <div class="flex-1 min-w-0">
-                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-2">
-                                <h4 class="text-base font-black text-gray-900 group-hover:text-indigo-700 transition-colors">
-                                    {{ $notification->data['message'] ?? 'Nouvelle notification' }}
-                                </h4>
-                                <span
-                                    class="text-xs font-bold text-gray-400 bg-gray-50 px-3 py-1 rounded-full whitespace-nowrap">
+                            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1">
+                                <h3 class="text-sm font-bold text-gray-900 truncate">
+                                    {{ $notification->data['message'] ?? 'Notification système' }}
+                                </h3>
+                                <span class="text-[11px] font-medium text-gray-400 whitespace-nowrap">
                                     {{ $notification->created_at->diffForHumans() }}
                                 </span>
                             </div>
 
+                            @if(isset($notification->data['description']))
+                                <p class="text-sm text-gray-600 line-clamp-2">
+                                    {{ $notification->data['description'] }}
+                                </p>
+                            @endif
+
                             @if(isset($notification->data['action_url']))
-                                <div class="mt-4 flex items-center space-x-4">
+                                <div class="mt-3">
                                     <form action="{{ route('notifications.markAsRead', $notification->id) }}" method="POST"
                                         class="inline">
                                         @csrf
                                         <input type="hidden" name="redirect" value="{{ $notification->data['action_url'] }}">
                                         <button type="submit"
-                                            class="inline-flex items-center text-sm font-black text-indigo-600 hover:text-indigo-800 tracking-tight group/btn">
+                                            class="inline-flex items-center text-xs font-bold text-blue-600 hover:underline">
                                             Consulter les détails
-                                            <i
-                                                class="fas fa-arrow-right ml-2 text-[10px] transition-transform group-hover/btn:translate-x-1"></i>
+                                            <i class="fas fa-chevron-right ml-1 text-[8px]"></i>
                                         </button>
                                     </form>
                                 </div>
                             @endif
                         </div>
 
-                        <!-- Quick Mark As Read (only for unread) -->
+                        <!-- Mark as read tick (small & unobtrusive) -->
                         @if(!$notification->read_at)
-                            <div class="ml-6 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <form action="{{ route('notifications.markAsRead', $notification->id) }}" method="POST">
-                                    @csrf
-                                    <button type="submit"
-                                        class="w-10 h-10 rounded-xl bg-white border border-gray-100 text-gray-400 hover:text-emerald-600 hover:border-emerald-200 transition-all shadow-sm"
-                                        title="Marquer comme lu">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                </form>
-                            </div>
+                            <form action="{{ route('notifications.markAsRead', $notification->id) }}" method="POST"
+                                class="flex-shrink-0">
+                                @csrf
+                                <button type="submit" class="p-2 text-gray-300 hover:text-green-500 transition-colors"
+                                    title="Marquer comme lu">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
                         @endif
                     </div>
                 @empty
-                    <div class="py-24 text-center">
-                        <div class="w-24 h-24 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <i class="fas fa-envelope-open text-4xl text-gray-200"></i>
+                    <div class="py-20 text-center bg-gray-50/50">
+                        <div
+                            class="w-16 h-16 bg-white rounded-full flex items-center justify-center border border-gray-100 mx-auto mb-4">
+                            <i class="fas fa-bell-slash text-2xl text-gray-200"></i>
                         </div>
-                        <h3 class="text-xl font-black text-gray-900">Aucune notification</h3>
-                        <p class="text-gray-500 font-medium max-w-xs mx-auto mt-2">Vous avez traité toutes vos notifications
-                            récentes. Revenez plus tard !</p>
+                        <h2 class="text-lg font-bold text-gray-800">Aucune notification</h2>
+                        <p class="text-sm text-gray-500 mt-2">Vous êtes à jour !</p>
                     </div>
                 @endforelse
             </div>
         </div>
 
-        <!-- Pagination Container -->
+        <!-- Pagination -->
         @if($notifications->hasPages())
-            <div class="px-8 py-6 bg-white border border-gray-100 rounded-[2.5rem] shadow-xl shadow-gray-100/50">
+            <div class="mt-6">
                 {{ $notifications->links() }}
             </div>
         @endif

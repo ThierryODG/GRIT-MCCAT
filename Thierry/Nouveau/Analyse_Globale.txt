@@ -1,0 +1,190 @@
+# Analyse Globale du Projet GRIT (Gestion des Recommandations)
+
+Ce document détaille la structure, les entités, les relations et les contraintes du système pour l'élaboration de diagrammes UML (Classes, Séquence, Cas d'Utilisation, Activité).
+
+## 1. Acteurs et Rôles
+Le système comporte plusieurs acteurs clés définis par des rôles :
+- **ITS (Inspecteur Technique de Service)** : Créateur des recommandations, superviseur global. Peut archiver.
+- **Inspecteur Général (IG)** : Valide les recommandations soumises par l'ITS et les Plans d'Action.
+- **Responsable de Structure** : Reçoit les recommandations validées, valide les plans d'actions proposés par les Points Focaux.
+- **Point Focal** : Rédige les plans d'action pour les recommandations assignées, rapporte l'exécution (preuves).
+- **Admin** : Gestion des utilisateurs et configuration.
+
+## 2. Entités Principales (Models)
+
+### Recommandation
+- **Description** : L'élément central du système.
+- **Attributs clés** : reference, titre, description, priorite, statut, date_limite, dates de validation/rejet/clôture, archived_at.
+- **Relations** :
+    - Appartient à un ITS (User).
+    - Appartient à une Structure.
+    - Peut avoir un Inspecteur Général (User).
+    - Peut avoir un Responsable (User).
+    - Peut avoir un Point Focal (User).
+    - A plusieurs Plans d'Action.
+    - A plusieurs Documents.
+    - A plusieurs Commentaires.
+
+### PlanAction
+- **Description** : Une étape concrète pour réaliser une recommandation.
+- **Attributs clés** : action, delai, responsable_execution, cout, statut_execution, date_debut_prevue, date_fin_prevue.
+- **Relations** :
+    - Appartient à une Recommandation.
+    - A plusieurs Preuves d'Exécution.
+
+### User
+- **Attributs** :
+    - id: integer
+    - name: string
+    - email: string
+    - password: string
+    - telephone: string
+    - role_id: integer (FK)
+    - structure_id: integer (FK)
+- **Méthodes Métier** :
+    - hasRole(role): bool
+    - isAdmin(): bool
+    - isITS(): bool
+    - isInspecteurGeneral(): bool
+    - isPointFocal(): bool
+    - isResponsable(): bool
+    - canDo(permission): bool
+- **Relations** :
+    - role(): BelongsTo Role
+    - structure(): BelongsTo Structure
+    - recommandationsCreees(): HasMany Recommandation (si ITS)
+    - recommandationsValidees(): HasMany Recommandation (si IG)
+    - recommandationsResponsable(): HasMany Recommandation (si Resp)
+    - recommandationsAssignees(): HasMany Recommandation (si PF)
+
+### PlanAction
+- **Attributs** :
+    - id: integer
+    - action: string
+    - statut_execution: enum ('non_demarre', 'en_cours', 'termine')
+    - pourcentage_avancement: integer
+    - commentaire_avancement: text
+    - delai_mois: integer
+    - date_debut_prevue: date
+    - date_fin_prevue: date
+    - executant_nom: string
+    - recommandation_id: integer (FK)
+    - point_focal_id: integer (FK)
+    - responsable_id: integer (FK)
+    - validateur_ig_id: integer (FK)
+- **Méthodes Métier** :
+    - estRempli(): bool
+    - peutEtreValideParResponsable(): bool
+    - peutEtreValideParIG(): bool
+    - estValide(): bool
+    - estEnRetard(): bool
+- **Relations** :
+    - recommandation(): BelongsTo Recommandation
+    - preuvesExecution(): HasMany PreuveExecution
+    - pointFocal(): BelongsTo User (executant)
+    - responsable(): BelongsTo User (superviseur)
+    - validateurIG(): BelongsTo User
+
+### Commentaire
+- **Attributs** :
+    - id: integer
+    - contenu: text
+    - type: string
+    - destinataire_role: string
+    - user_id: integer (FK)
+    - recommandation_id: integer (FK)
+- **Relations** :
+    - user(): BelongsTo User (Auteur)
+    - recommandation(): BelongsTo Recommandation
+
+### Structure
+- **Attributs** :
+    - id: integer
+    - code: string
+    - nom: string
+    - sigle: string
+    - description: text
+    - active: boolean
+- **Méthodes Métier** :
+    - scopeActive(query)
+- **Relations** :
+    - recommandations(): HasMany Recommandation
+    - users(): HasMany User
+
+### Role
+- **Attributs** :
+    - id: integer
+    - nom: string (ex: 'its', 'inspecteur_general', 'responsable', 'point_focal')
+- **Méthodes Métier** :
+    - hasPermission(name): bool
+    - assignPermission(name): void
+    - removePermission(name): void
+    - syncPermissions(names): void
+- **Relations** :
+    - utilisateurs(): HasMany User
+    - permissions(): BelongsToMany Permission
+
+### Permission
+- **Attributs** :
+    - id: integer
+    - nom: string
+- **Relations** :
+    - roles(): BelongsToMany Role
+
+## 3. Workflow (Cycle de Vie)
+
+### 3.1 Phase Création et Validation Initiale
+1.  **Création (ITS)** :
+    - L'ITS crée une recommandation. Statut: `brouillon`.
+    - Ajout de documents justificatifs.
+2.  **Soumission (ITS)** :
+    - L'ITS soumet la recommandation à l'IG. Statut: `soumise_ig`.
+    - Notification envoyée à l'IG.
+3.  **Validation (Inspecteur Général)** :
+    - L'IG examine la recommandation.
+    - **Cas Validé** : Statut passe à `validee_ig` puis automatiquement à `transmise_structure` (ou assignation directe).
+    - **Cas Rejeté** : Statut passe à `rejetee_ig` avec `motif_rejet_ig`. Retour à l'ITS pour correction.
+
+### 3.2 Phase Assignation et Planification
+4.  **Assignation (Responsable)** :
+    - Le Responsable reçoit la recommandation.
+    - Il sélectionne un Point Focal. Statut: `point_focal_assigne`.
+5.  **Rédaction du Plan (Point Focal)** :
+    - Le Point Focal rédige les actions (PlanAction).
+    - Statut passe à `plan_en_redaction`.
+6.  **Soumission du Plan (Point Focal)** :
+    - Le PF soumet le plan au Responsable. Statut: `plan_soumis_responsable`.
+
+### 3.3 Phase Validation du Plan
+7.  **Validation Niveau 1 (Responsable)** :
+    - Le Responsable valide le plan. Statut: `plan_valide_responsable`.
+    - OU le rejette (`plan_rejete_responsable`) -> retour au PF.
+8.  **Validation Niveau 2 (IG)** :
+    - Si validé par Responsable, le plan est soumis à l'IG. Statut: `plan_soumis_ig`.
+    - L'IG valide le plan final. Statut: `plan_valide_ig` -> `en_execution`.
+    - OU rejette (`plan_rejete_ig`) -> retour au processus de correction.
+
+### 3.4 Phase Exécution et Suivi
+9.  **Exécution (Point Focal)** :
+    - Le PF met à jour l'avancement des actions (`statut_execution`).
+    - Il ajoute des Preuves d'Exécution.
+10. **Suivi (Responsable/ITS/IG)** :
+    - Ils consultent le dashboard de suivi.
+    - Relances automatiques ou manuelles en cas de retard.
+
+### 3.5 Phase Clôture et Archivage
+11. **Demande de Clôture (Responsable/IG)** :
+    - Si toutes les actions sont terminées (`execution_terminee`), une demande de clôture est initiée. Statut: `demande_cloture`.
+12. **Clôture (ITS)** :
+    - L'ITS vérifie l'effectivité.
+    - Il valide la clôture. Statut: `cloturee`.
+13. **Archivage (ITS)** :
+    - L'ITS archive la recommandation clôturée (Action `archive`).
+    - La date `archived_at` est renseignée. La recommandation n'apparaît plus dans les listes actives.
+
+## 4. Règles de Gestion Spécifiques (Constraints)
+- **Constraint 1 (Unicité)** : Chaque recommandation a une référence unique générée (ex: REC-202X-0001).
+- **Constraint 2 (Responsabilité)** : Un Point Focal ne peut voir que les recommandations qui lui sont assignées.
+- **Constraint 3 (Modification)** : Une recommandation validée par l'IG est verrouillée en modification (sauf via processus de rejet).
+- **Constraint 4 (Archivage)** : Seul l'ITS peut archiver. Seules les recommandations `cloturee` peuvent être archivées.
+- **Constraint 5 (Délais)** : Les dates limites doivent être respectées. Le système calcule les retards (`estEnRetard()`).

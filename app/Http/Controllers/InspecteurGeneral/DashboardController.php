@@ -14,11 +14,11 @@ class DashboardController extends Controller
     {
         // ==================== PHASE 1 : Validation Recommandations ====================
         $statsRecommandations = [
-            'en_attente_validation' => Recommandation::where('statut', 'soumise_ig')->count(),
-            'validees_ig' => Recommandation::where('statut', 'validee_ig')
+            'en_attente_validation' => Recommandation::where('statut', Recommandation::STATUT_SOUMISE_IG)->count(),
+            'validees_ig' => Recommandation::where('statut', Recommandation::STATUT_VALIDE_IG)
                 ->where('inspecteur_general_id', Auth::id())
                 ->count(),
-            'rejetees_ig' => Recommandation::where('statut', 'rejetee_ig')
+            'rejetees_ig' => Recommandation::where('statut', Recommandation::STATUT_REJETEE_IG)
                 ->where('inspecteur_general_id', Auth::id())
                 ->count(),
         ];
@@ -27,15 +27,15 @@ class DashboardController extends Controller
         $statsPlansAction = [
             // Plans dont la recommandation est soumise à l'IG
             'en_attente_validation' => PlanAction::whereHas('recommandation', function($q) {
-                $q->where('statut', 'plan_soumis_ig');
+                $q->where('statut', Recommandation::STATUT_PLAN_SOUMIS_IG);
             })->count(),
             'valides' => PlanAction::where('validateur_ig_id', Auth::id())
                 ->whereHas('recommandation', function($q) {
-                    $q->where('statut', 'plan_valide_ig');
+                    $q->where('statut', Recommandation::STATUT_PLAN_VALIDE_IG);
                 })->count(),
             'rejetes' => PlanAction::where('validateur_ig_id', Auth::id())
                 ->whereHas('recommandation', function($q) {
-                    $q->where('statut', 'plan_rejete_ig');
+                    $q->where('statut', Recommandation::STATUT_PLAN_REJETE_IG);
                 })->count(),
         ];
 

@@ -67,6 +67,36 @@
                     </button>
                 @endforeach
             </div>
+
+            <!-- Pièces jointes (En dehors de la boucle d'actions) -->
+            <div class="p-4 border-t border-gray-100 bg-gray-50/50">
+                <h3 class="font-semibold text-gray-700 mb-3 text-sm flex items-center">
+                    <i class="fas fa-paperclip mr-2 text-blue-500"></i>
+                    Pièces Jointes
+                </h3>
+                @if($recommandation->documents && $recommandation->documents->count() > 0)
+                    <div class="space-y-2">
+                        @foreach($recommandation->documents as $doc)
+                            <div class="flex items-center justify-between p-2 bg-white border border-gray-100 rounded hover:bg-gray-50 transition-colors group">
+                                <div class="flex items-center min-w-0">
+                                    <div class="truncate">
+                                        <p class="text-xs font-medium text-gray-900 truncate" title="{{ $doc->file_name }}">
+                                            {{ $doc->file_name }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <a href="{{ route('its.recommandations.download', $doc) }}" 
+                                   class="text-gray-400 hover:text-blue-600 transition-colors ml-2"
+                                   title="Télécharger">
+                                    <i class="fas fa-download fa-sm"></i>
+                                </a>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-xs text-gray-400 italic text-center py-2">Aucune pièce jointe</p>
+                @endif
+            </div>
         </div>
 
         <!-- Main Content -->
@@ -80,10 +110,23 @@
                         </span>
                         <h2 class="text-2xl font-bold text-gray-900 mb-4">{{ $action->action }}</h2>
                         
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-lg border border-gray-100">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-gray-50 p-6 rounded-lg border border-gray-100">
                             <div>
                                 <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Indicateurs</h5>
                                 <p class="text-gray-700">{{ $action->indicateurs ?? 'Non défini' }}</p>
+                            </div>
+                            <div>
+                                <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Exécutant</h5>
+                                <div class="text-gray-900">
+                                    @if($action->executant_type === 'autre')
+                                        <p class="font-medium">{{ $action->executant_nom }}</p>
+                                        @if($action->executant_role)
+                                            <p class="text-xs text-gray-500">{{ $action->executant_role }}</p>
+                                        @endif
+                                    @else
+                                        <p class="font-medium">Point Focal</p>
+                                    @endif
+                                </div>
                             </div>
                             <div>
                                 <h5 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Échéance</h5>

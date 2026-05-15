@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 use App\Notifications\RecommandationSoumise;
 
 class RecommandationController extends Controller
@@ -19,6 +20,13 @@ class RecommandationController extends Controller
     public function index(Request $request)
     {
         $query = Recommandation::where('its_id', Auth::id());
+
+        // ==================== FILTRE ARCHIVES ====================
+        if ($request->query('view') === 'archives') {
+            $query->archived();
+        } else {
+            $query->notArchived();
+        }
 
         // ==================== FILTRES ====================
         if ($request->filled('statut')) {
@@ -72,7 +80,7 @@ class RecommandationController extends Controller
             'structure_id' => 'required|exists:structures,id',
             'priorite' => 'required|in:haute,moyenne,basse',
             'date_limite' => 'required|date|after:today',
-            'documents.*' => 'nullable|file|mimes:pdf,doc,docx,xls,xlsx,jpg,jpeg,png|max:10240', // 10MB max
+            'documents.*' => 'nullable|file|mimes:pdf,docx,xlsx,jpg,jpeg,png|max:10240', // 10MB max
             'documents_descriptions.*' => 'nullable|string|max:255',
         ]);
 
@@ -193,7 +201,25 @@ class RecommandationController extends Controller
             'structure_id' => 'required|exists:structures,id',
             'priorite' => 'required|in:haute,moyenne,basse',
             'date_limite' => 'required|date|after:today',
+            'documents.*' => 'nullable|file|mimes:pdf,docx,xlsx,jpg,jpeg,png|max:10240',
+            'documents_descriptions.*' => 'nullable|string|max:255',
         ]);
+
+        // Gestion des nouveaux documents (AJOUT FIX) - Placé avant les actions pour garantir l'enregistrement
+        if ($request->hasFile('documents')) {
+            foreach ($request->file('documents') as $index => $file) {
+                $path = $file->store('recommandations/documents', 'public');
+                $originalName = $file->getClientOriginalName();
+                $description = $request->documents_descriptions[$index] ?? $originalName;
+
+                \App\Models\RecommandationDocument::create([
+                    'recommandation_id' => $recommandation->id,
+                    'file_path' => $path,
+                    'file_name' => $originalName,
+                    'description' => $description,
+                ]);
+            }
+        }
 
         // Gestion des actions spécifiques
         if ($request->has('action')) {
@@ -238,6 +264,7 @@ class RecommandationController extends Controller
 
         // Mise à jour simple si pas d'action spécifique
         $recommandation->update($validated);
+
         return redirect()->route('its.recommandations.show', $recommandation)
             ->with('success', 'Recommandation mise à jour avec succès.');
     }
@@ -304,6 +331,14 @@ class RecommandationController extends Controller
             'message' => 'nullable|string|max:1000',
         ]);
 
+        // Validation supplémentaire : vérifier que le destinataire existe pour cette recommandation
+        if ($validated['destinataire'] === 'point_focal' && !$recommandation->point_focal_id) {
+            return back()->with('error', 'Aucun Point Focal n\'est associé à cette recommandation.');
+        }
+        if ($validated['destinataire'] === 'responsable' && !$recommandation->responsable_id) {
+            return back()->with('error', 'Aucun Responsable n\'est associé à cette recommandation.');
+        }
+
         // Créer le commentaire de type "rappel"
         $recommandation->commentaires()->create([
             'user_id' => Auth::id(),
@@ -312,7 +347,27 @@ class RecommandationController extends Controller
             'type' => 'rappel',
         ]);
 
-        // TODO: Envoyer une notification réelle (Email/DB Notification)
+        // Envoyer une notification réelle
+        $recipient = match($validated['destinataire']) {
+            'point_focal' => $recommandation->pointFocal,
+            'responsable' => $recommandation->responsable,
+            'inspecteur_general' => $recommandation->inspecteurGeneral,
+        };
+
+        if ($recipient) {
+            $recipient->notify(new \App\Notifications\ManualReminderReceived(
+                $recommandation, 
+                Auth::user(), 
+                $validated['message'] ?? 'Rappel envoyé concernant cette recommandation.'
+            ));
+        } else {
+            $destinataireLabel = match($validated['destinataire']) {
+                'point_focal' => 'le Point Focal',
+                'responsable' => 'le Responsable',
+                'inspecteur_general' => 'l\'Inspecteur Général',
+            };
+            return back()->with('error', "Impossible d'envoyer le rappel : {$destinataireLabel} n'est pas encore assigné à cette recommandation.");
+        }
 
         $destinataireLabel = match($validated['destinataire']) {
             'point_focal' => 'Point Focal',
@@ -321,5 +376,55 @@ class RecommandationController extends Controller
         };
 
         return back()->with('success', "Rappel envoyé avec succès au {$destinataireLabel}.");
+    }
+
+    /**
+     * Télécharger un document
+     */
+    public function download(\App\Models\RecommandationDocument $document)
+    {
+        $recommandation = $document->recommandation;
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+
+        // Plus permissif : Créateur, IG assigné, Responsable, Point Focal
+        $isAllowed = $recommandation->its_id === $user->id || 
+                     $recommandation->inspecteur_general_id === $user->id ||
+                     $recommandation->responsable_id === $user->id ||
+                     $recommandation->point_focal_id === $user->id ||
+                     $user->hasRole('admin') || 
+                     ($user->hasRole('inspecteur_general') && $recommandation->statut !== 'brouillon');
+
+        if (!$isAllowed) {
+            abort(403, 'Action non autorisée.');
+        }
+
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+
+        if (!$disk->exists($document->file_path)) {
+            abort(404, 'Le fichier n\'existe pas.');
+        }
+
+        return $disk->download($document->file_path, $document->file_name);
+    }
+
+    /**
+     * Archiver une recommandation clôturée
+     */
+    public function archive(Recommandation $recommandation)
+    {
+        if ($recommandation->its_id !== Auth::id()) {
+            abort(403, 'Action non autorisée.');
+        }
+
+        if ($recommandation->statut !== 'cloturee') {
+            return back()->with('error', 'Seules les recommandations clôturées peuvent être archivées.');
+        }
+
+        $recommandation->update(['archived_at' => now()]);
+
+        return redirect()->route('its.recommandations.index')
+            ->with('success', 'Recommandation archivée avec succès.');
     }
 }

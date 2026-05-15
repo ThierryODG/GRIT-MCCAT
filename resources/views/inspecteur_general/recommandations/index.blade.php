@@ -94,7 +94,22 @@
         <div class="overflow-hidden bg-white border border-gray-100 shadow-sm rounded-xl">
             <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-semibold text-gray-800">Liste des Recommandations</h2>
+                    <div class="flex items-center space-x-4">
+                        <h2 class="text-lg font-semibold text-gray-800">Liste des Recommandations</h2>
+                        
+                        <!-- Toggle Archives -->
+                        <div class="flex bg-white/50 rounded-lg p-1 ml-4 border border-blue-100">
+                            <a href="{{ route('inspecteur_general.recommandations.index', array_merge(request()->query(), ['view' => 'active'])) }}" 
+                               class="px-3 py-1 text-xs rounded-md transition {{ request('view') !== 'archives' ? 'bg-white shadow-sm text-blue-700 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                                Actives
+                            </a>
+                            <a href="{{ route('inspecteur_general.recommandations.index', array_merge(request()->query(), ['view' => 'archives'])) }}" 
+                               class="px-3 py-1 text-xs rounded-md transition {{ request('view') === 'archives' ? 'bg-white shadow-sm text-blue-700 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                                Archives
+                            </a>
+                        </div>
+                    </div>
+                    
                     <span class="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-100 rounded-full">
                         {{ $recommandations->total() }} résultat(s)
                     </span>

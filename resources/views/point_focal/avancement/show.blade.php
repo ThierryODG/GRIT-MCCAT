@@ -246,10 +246,10 @@
                                     <div class="flex items-center gap-4">
                                         <span class="text-sm text-gray-600">Statut actuel :</span>
                                         <span class="px-3 py-1 rounded-full text-sm font-medium" :class="{
-                                                                                                'bg-green-100 text-green-800': action.statut_execution === 'termine',
-                                                                                                'bg-orange-100 text-orange-800': action.statut_execution === 'en_cours',
-                                                                                                'bg-gray-100 text-gray-800': !action.statut_execution || action.statut_execution === 'non_demarre'
-                                                                                            }"
+                                                                                                    'bg-green-100 text-green-800': action.statut_execution === 'termine',
+                                                                                                    'bg-orange-100 text-orange-800': action.statut_execution === 'en_cours',
+                                                                                                    'bg-gray-100 text-gray-800': !action.statut_execution || action.statut_execution === 'non_demarre'
+                                                                                                }"
                                             x-text="formatStatus(action.statut_execution)"></span>
                                     </div>
 

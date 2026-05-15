@@ -87,23 +87,25 @@
                     </div>
 
                     <!-- Delete User -->
-                    <div
-                        class="bg-white overflow-hidden shadow-sm sm:rounded-xl border border-red-100 transition hover:shadow-md">
-                        <div class="p-6 sm:p-8">
-                            <div class="flex items-center mb-6">
-                                <div class="p-2 bg-red-50 rounded-lg mr-4">
-                                    <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    @if(Auth::user()->isAdmin())
+                        <div
+                            class="bg-white overflow-hidden shadow-sm sm:rounded-xl border border-red-100 transition hover:shadow-md">
+                            <div class="p-6 sm:p-8">
+                                <div class="flex items-center mb-6">
+                                    <div class="p-2 bg-red-50 rounded-lg mr-4">
+                                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-red-600">Zone Danger</h3>
+                                        <p class="text-sm text-gray-500">Supprimer définitivement votre compte.</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 class="text-lg font-semibold text-gray-900 text-red-600">Zone Danger</h3>
-                                    <p class="text-sm text-gray-500">Supprimer définitivement votre compte.</p>
+                                <div class="max-w-xl">
+                                    @include('profile.partials.delete-user-form')
                                 </div>
-                            </div>
-                            <div class="max-w-xl">
-                                @include('profile.partials.delete-user-form')
                             </div>
                         </div>
-                    </div>
+                    @endif
                 </div>
             </div>
         </div>

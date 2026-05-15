@@ -19,11 +19,18 @@ class RecommandationController extends Controller
             ->orderBy('created_at', 'asc');
 
         // Filtres
+        if (request('view') === 'archives') {
+            $query->archived();
+        } else {
+            $query->notArchived();
+             // Par défaut, celles soumises à l'IG pour validation initiale (si pas de filtre statut)
+             if (!request('statut')) {
+                 $query->where('statut', 'soumise_ig');
+             }
+        }
+
         if (request('statut')) {
             $query->where('statut', request('statut'));
-        } else {
-            // Par défaut, celles soumises à l'IG pour validation initiale
-            $query->where('statut', 'soumise_ig');
         }
 
         if (request('priorite')) {
@@ -45,7 +52,7 @@ class RecommandationController extends Controller
      */
     public function show(Recommandation $recommandation)
     {
-        $recommandation->load(['its', 'structure']);
+        $recommandation->load(['its', 'structure', 'documents']);
         return view('inspecteur_general.recommandations.show', compact('recommandation'));
     }
 

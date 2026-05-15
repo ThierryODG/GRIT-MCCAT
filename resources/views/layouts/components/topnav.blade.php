@@ -120,12 +120,16 @@
                         <p class="font-medium text-gray-700">{{ Auth::user()->name }}</p>
                         <p class="text-xs text-gray-500 capitalize">
                             @auth
-                                @if(Auth::user()->hasRole('administrateur')) Administrateur
-                                @elseif(Auth::user()->hasRole('its')) ITS
-                                @elseif(Auth::user()->hasRole('inspecteur_general')) Inspecteur Général
-                                @elseif(Auth::user()->hasRole('point_focal')) Point Focal
-                                @elseif(Auth::user()->hasRole('responsable')) Responsable
-                                @elseif(Auth::user()->hasRole('cabinet_ministre')) Cabinet Ministre
+                                @php
+                                    /** @var \App\Models\User $user */
+                                    $user = Auth::user();
+                                @endphp
+                                @if($user->hasRole('administrateur')) Administrateur
+                                @elseif($user->hasRole('its')) ITS
+                                @elseif($user->hasRole('inspecteur_general')) Inspecteur Général
+                                @elseif($user->hasRole('point_focal')) Point Focal
+                                @elseif($user->hasRole('responsable')) Responsable
+                                @elseif($user->hasRole('cabinet_ministre')) Cabinet Ministre
                                 @else Utilisateur
                                 @endif
                             @endauth

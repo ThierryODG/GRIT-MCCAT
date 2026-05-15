@@ -18,7 +18,7 @@ class AlertController extends Controller
         // 1. Recommandations en retard
         $enRetard = Recommandation::where('date_limite', '<', now())
             ->whereNotIn('statut', ['cloturee', 'terminee'])
-            ->with(['its:id,name', 'pointFocal:id,name', 'planAction'])
+            ->with(['its:id,name', 'pointFocal:id,name', 'plansAction'])
             ->orderBy('date_limite', 'asc')
             ->get();
 
@@ -65,7 +65,7 @@ class AlertController extends Controller
 
         // TODO: Envoyer une notification au Responsable et Point Focal
 
-        return redirect()->route('cabinet_ministre.alertes.index')
+        return redirect()->route('cabinet_ministre.alertes')
             ->with('success', 'Alerte escaladée avec succès. Les responsables ont été notifiés.');
     }
 }

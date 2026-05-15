@@ -85,17 +85,17 @@ class PlanActionController extends Controller
 
         $validated = $request->validate([
             'action' => 'required|string|max:1000',
-            'executant_type' => 'required|in:self,other',
-            'executant_nom' => 'nullable|required_if:executant_type,other|string|max:255',
+            'executant_type' => 'required|in:moi_meme,autre',
+            'executant_nom' => 'nullable|required_if:executant_type,autre|string|max:255',
             'executant_role' => 'nullable|string|max:255',
         ]);
 
-        // Création du plan d'action (seulement action + workflow/execution)
+        // Création du plan d'action
         $planAction = new PlanAction([
             'action' => $validated['action'],
             'executant_type' => $validated['executant_type'],
-            'executant_nom' => $validated['executant_type'] === 'other' ? $validated['executant_nom'] : Auth::user()->name,
-            'executant_role' => $validated['executant_role'],
+            'executant_nom' => $validated['executant_type'] === 'autre' ? $validated['executant_nom'] : Auth::user()->name,
+            'executant_role' => $validated['executant_type'] === 'autre' ? $validated['executant_role'] : 'Point Focal',
         ]);
         $planAction->recommandation_id = $recommandation->id;
         $planAction->point_focal_id = Auth::id();
@@ -108,13 +108,16 @@ class PlanActionController extends Controller
         if (in_array($recommandation->statut, ['point_focal_assigne', 'plan_rejete_responsable'])) {
             $recommandation->update([
                 'statut' => 'plan_en_redaction',
-                // Effacer le motif de rejet responsable si le PF crée une nouvelle action
                 'motif_rejet_responsable' => null,
                 'date_rejet_responsable' => null,
+                'motif_rejet_ig' => null, // Clear global IG rejection motif
             ]);
 
-            // Effacer les motifs IG au niveau des plans si présents
-            $recommandation->plansAction()->update(['motif_rejet_ig' => null]);
+            // Clear motifs at the individual action level
+            $recommandation->plansAction()->update([
+                'motif_rejet_responsable' => null,
+                'motif_rejet_ig' => null
+            ]);
         }
 
         return redirect()->route('point_focal.recommandations.show', $recommandation)
@@ -165,8 +168,8 @@ class PlanActionController extends Controller
 
         $validated = $request->validate([
             'action' => 'required|string|max:1000',
-            'executant_type' => 'required|in:self,other',
-            'executant_nom' => 'nullable|required_if:executant_type,other|string|max:255',
+            'executant_type' => 'required|in:moi_meme,autre',
+            'executant_nom' => 'nullable|required_if:executant_type,autre|string|max:255',
             'executant_role' => 'nullable|string|max:255',
         ]);
 
@@ -175,8 +178,8 @@ class PlanActionController extends Controller
         $planAction->update([
             'action' => $validated['action'],
             'executant_type' => $validated['executant_type'],
-            'executant_nom' => $validated['executant_type'] === 'other' ? $validated['executant_nom'] : Auth::user()->name,
-            'executant_role' => $validated['executant_role'],
+            'executant_nom' => $validated['executant_type'] === 'autre' ? $validated['executant_nom'] : Auth::user()->name,
+            'executant_role' => $validated['executant_type'] === 'autre' ? $validated['executant_role'] : 'Point Focal',
         ]);
 
         // Quand le Point Focal modifie un plan (quel que soit le motif précédent),
@@ -188,11 +191,10 @@ class PlanActionController extends Controller
         if ($reco) {
             $reco->update([
                 'statut' => 'plan_en_redaction',
-                'motif_rejet_responsable' => null,
-                'date_rejet_responsable' => null,
+                'motif_rejet_ig' => null,
             ]);
 
-            // Clear motifs IG au niveau des plans
+            // Clear at action level
             $reco->plansAction()->update(['motif_rejet_ig' => null]);
         }
 
@@ -200,7 +202,7 @@ class PlanActionController extends Controller
         $planAction->motif_rejet_responsable = null;
         $planAction->motif_rejet_ig = null;
         $planAction->save();
-
+        
         return redirect()->route('point_focal.recommandations.show', $planAction->recommandation_id)
             ->with('success', 'Plan d\'action modifié avec succès.');
     }
@@ -232,12 +234,11 @@ class PlanActionController extends Controller
 
         // Après suppression, considérer que le PF a modifié la planification :
         // repasser la recommandation en rédaction et effacer les motifs de rejet.
-        $reco = \App\Models\Recommandation::find($recommandation_id);
+        $reco = Recommandation::find($recommandation_id);
         if ($reco) {
             $reco->update([
                 'statut' => 'plan_en_redaction',
-                'motif_rejet_responsable' => null,
-                'date_rejet_responsable' => null,
+                'motif_rejet_ig' => null,
             ]);
 
             $reco->plansAction()->update(['motif_rejet_ig' => null]);

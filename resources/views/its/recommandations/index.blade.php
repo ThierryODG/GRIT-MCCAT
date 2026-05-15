@@ -53,9 +53,24 @@
 
 <!-- Bouton de création -->
 <div class="flex items-center justify-between mb-6">
-    <div class="text-sm text-gray-600">
-        {{ $recommandations->total() }} recommandation(s) trouvée(s)
+    <div class="flex items-center space-x-4">
+        <div class="text-sm text-gray-600">
+            {{ $recommandations->total() }} recommandation(s) trouvée(s)
+        </div>
+        
+        <!-- Toggle Archives -->
+        <div class="flex bg-gray-200 rounded-lg p-1">
+            <a href="{{ route('its.recommandations.index', array_merge(request()->query(), ['view' => 'active'])) }}" 
+               class="px-3 py-1 text-sm rounded-md transition {{ request('view') !== 'archives' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                Actives
+            </a>
+            <a href="{{ route('its.recommandations.index', array_merge(request()->query(), ['view' => 'archives'])) }}" 
+               class="px-3 py-1 text-sm rounded-md transition {{ request('view') === 'archives' ? 'bg-white shadow text-gray-800 font-medium' : 'text-gray-600 hover:text-gray-800' }}">
+                Archives
+            </a>
+        </div>
     </div>
+
     <a href="{{ route('its.recommandations.create') }}"
        class="px-4 py-2 text-white transition bg-green-600 rounded-md hover:bg-green-700">
         <i class="mr-2 fas fa-plus"></i>Nouvelle Recommandation

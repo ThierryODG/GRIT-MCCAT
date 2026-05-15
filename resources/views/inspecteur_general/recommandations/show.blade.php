@@ -135,14 +135,40 @@
                             </div>
                         </div>
 
-                        <!-- Description -->
+                        <!-- Description (Question) -->
                         <div>
-                            <label class="block mb-3 text-sm font-semibold text-gray-700">Description détaillée</label>
+                            <label class="block mb-3 text-sm font-semibold text-gray-700">Question / Constat / Description</label>
                             <div class="p-4 bg-gray-50 rounded-lg border border-gray-200 min-h-[120px]">
                                 <p class="leading-relaxed text-gray-900 whitespace-pre-line">
-                                    {{ $recommandation->description }}</p>
+                                    {{ $recommandation->description }}
+                                </p>
                             </div>
                         </div>
+
+                        <!-- Pièces Jointes (AJOUT) -->
+                        @if($recommandation->documents->count() > 0)
+                            <div class="mt-8 border-t border-gray-100 pt-6">
+                                <h3 class="text-sm font-bold uppercase tracking-wider text-gray-400 mb-4 flex items-center">
+                                    <i class="fas fa-paperclip mr-2"></i> Pièces jointes
+                                </h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    @foreach($recommandation->documents as $doc)
+                                        <div class="flex items-center justify-between p-3 border border-gray-100 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
+                                            <div class="flex items-center space-x-3 overflow-hidden">
+                                                <i class="fas fa-file-pdf text-blue-500"></i>
+                                                <span class="text-xs font-semibold text-gray-700 truncate">
+                                                    {{ $doc->description ?? $doc->file_name }}
+                                                </span>
+                                            </div>
+                                            <a href="{{ route('its.recommandations.download', $doc) }}" 
+                                               class="p-2 text-gray-400 hover:text-blue-600 transition-colors">
+                                                <i class="fas fa-download"></i>
+                                            </a>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            </div>
+                        @endif
 
                         <!-- Contexte -->
                         @if($recommandation->contexte)
@@ -266,8 +292,9 @@
                             <div class="space-y-4">
                                 <div class="flex items-center justify-between">
                                     <span class="text-sm font-medium text-gray-600">Statut:</span>
-                                    <span class="px-3 py-1 text-sm font-medium text-white rounded-lg
-                                        {{ $recommandation->statut === 'validee_ig' ? 'bg-green-500' : 'bg-red-500' }}">
+                                    <span
+                                        class="px-3 py-1 text-sm font-medium text-white rounded-lg
+                                                {{ $recommandation->statut === 'validee_ig' ? 'bg-green-500' : 'bg-red-500' }}">
                                         {{ $recommandation->statut === 'validee_ig' ? 'Validée' : 'Rejetée' }}
                                     </span>
                                 </div>
@@ -283,7 +310,8 @@
                                         <span class="block mb-2 text-sm font-medium text-gray-600">Motif du rejet:</span>
                                         <div class="p-3 border border-red-200 rounded-lg bg-red-50">
                                             <p class="text-sm text-gray-900 whitespace-pre-line">
-                                                {{ $recommandation->motif_rejet_ig }}</p>
+                                                {{ $recommandation->motif_rejet_ig }}
+                                            </p>
                                         </div>
                                     </div>
                                 @endif
@@ -293,7 +321,8 @@
                                         <span class="block mb-2 text-sm font-medium text-gray-600">Commentaire:</span>
                                         <div class="p-3 border border-blue-200 rounded-lg bg-blue-50">
                                             <p class="text-sm text-gray-900 whitespace-pre-line">
-                                                {{ $recommandation->commentaire_ig }}</p>
+                                                {{ $recommandation->commentaire_ig }}
+                                            </p>
                                         </div>
                                     </div>
                                 @endif

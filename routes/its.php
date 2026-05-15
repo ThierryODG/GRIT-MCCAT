@@ -38,6 +38,10 @@ Route::prefix('its')->middleware(['auth', /*'its'*/])->name('its.')->group(funct
         ->name('recommandations.suivi');
     Route::post('/recommandations/{recommandation}/rappel', [RecommandationController::class, 'rappel'])
         ->name('recommandations.rappel');
+    Route::post('/recommandations/{recommandation}/archive', [RecommandationController::class, 'archive'])
+        ->name('recommandations.archive');
+    Route::get('/recommandations/document/{document}', [RecommandationController::class, 'download'])
+        ->name('recommandations.download');
 
     // Rejeter une demande de clôture
     Route::post('/cloture/{recommandation}/rejeter', [ClotureController::class, 'rejeter'])

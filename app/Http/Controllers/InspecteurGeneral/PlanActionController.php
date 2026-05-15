@@ -161,15 +161,9 @@ class PlanActionController extends Controller
                 ->with('error', 'Cette recommandation n\'est pas en attente de validation de plans.');
         }
 
-        $recommandation->load([
-            'structure',
-            'its',
-            'pointFocal',
-            'responsable',
-            'plansAction' => function ($q) {
-                $q->whereNotNull('action');
-            }
-        ]);
+        $recommandation->load(['pointFocal', 'structure', 'its', 'documents', 'plansAction' => function ($q) {
+            $q->whereNotNull('action');
+        }]);
 
         return view('inspecteur_general.plan_actions.dossier', compact('recommandation'));
     }
