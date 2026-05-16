@@ -484,7 +484,11 @@
     <!-- ==================== PAGE DE GARDE ==================== -->
     <div class="cover-page">
         <div class="cover-title">
-            Rapport d'Exécution<br>de Recommandation
+            @if(isset($rapport_type) && $rapport_type === 'final')
+                Rapport Final d'Exécution<br>de Recommandation
+            @else
+                Rapport d'Avancement<br>de Recommandation
+            @endif
         </div>
 
         <div class="cover-ref">
@@ -786,7 +790,7 @@
                 @foreach($recommandation->commentaires->sortBy('created_at') as $comm)
                     <tr>
                         <td>{{ $comm->created_at->format('d/m/Y à H:i') }}</td>
-                        <td>{{ $comm->auteur->name ?? 'Système automatique' }}</td>
+                        <td>{{ $comm->user->name ?? 'Système automatique' }}</td>
                         <td>{{ $comm->contenu }}</td>
                     </tr>
                 @endforeach

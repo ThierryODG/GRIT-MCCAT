@@ -86,7 +86,7 @@ class SuiviController extends Controller
 
         $recommandation = $document->recommandation;
         /** @var \App\Models\User $user */
-        $user = auth()->user();
+        $user = \Illuminate\Support\Facades\Auth::user();
 
         $isAllowed = $user->hasRole('admin') ||
                      $user->hasRole('cabinet_ministre') ||

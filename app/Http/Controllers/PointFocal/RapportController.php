@@ -34,7 +34,9 @@ class RapportController extends Controller
      */
     public function create()
     {
-        if (!Auth::user()->isPointFocal()) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->isPointFocal()) {
             abort(403, 'Seul le Point Focal peut générer des rapports.');
         }
 
@@ -49,19 +51,21 @@ class RapportController extends Controller
      */
     public function store(Request $request)
     {
-        if (!Auth::user()->isPointFocal()) {
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        if (!$user->isPointFocal()) {
             abort(403);
         }
 
         $validated = $request->validate([
             'titre' => 'required|string|max:255',
-            'type' => 'required|in:execution,global', // Reduced types for now
-            'recommandation_id' => 'required_if:type,execution|exists:recommandations,id', // MANDATORY for execution
+            'type' => 'required|in:etape,final', // Types pour le point focal
+            'recommandation_id' => 'required|exists:recommandations,id', // Toujours requis
             'description' => 'nullable|string',
         ]);
 
         // Logic for Execution Report (The main focus)
-        if ($validated['type'] === 'execution') {
+        if (in_array($validated['type'], ['etape', 'final'])) {
             $recommandation = Recommandation::with([
                 'structure',
                 'its', 
@@ -70,7 +74,7 @@ class RapportController extends Controller
                 'pointFocal',
                 'plansAction.preuvesExecution',
                 'plansAction.preuvesExecution',
-                'commentaires.auteur'
+                'commentaires.user'
             ])->find($validated['recommandation_id']);
 
             // Use the NEW high-quality view
@@ -81,7 +85,8 @@ class RapportController extends Controller
                 'logo_path' => public_path('images/logo-mccat-300x300.jpg'),
                 // Extra metadata from the form
                 'rapport_titre' => $validated['titre'],
-                'rapport_description' => $validated['description']
+                'rapport_description' => $validated['description'],
+                'rapport_type' => $validated['type']
             ];
 
             $pdfView = 'point_focal.avancement.rapport_pdf';
@@ -163,9 +168,7 @@ class RapportController extends Controller
 
             $content = $pdf->output();
         } else {
-            // Global Report Logic (Simplified placeholder for now to prevent errors)
-            // TODO: Implement a proper global report view if needed later
-            return back()->with('error', 'Le rapport global n\'est pas encore disponible. Veuillez choisir "Rapport d\'exécution".');
+            return back()->with('error', 'Type de rapport invalide.');
         }
 
         // Filename and Storage
@@ -196,11 +199,14 @@ class RapportController extends Controller
         // Vérification des droits d'accès si nécessaire
         // Pour l'instant, tout utilisateur connecté peut voir les rapports (sauf cabinet ministre exclu via middleware/routes)
         
-        if (!Storage::disk('public')->exists($rapport->path)) {
+        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        $disk = Storage::disk('public');
+
+        if (!$disk->exists($rapport->path)) {
             abort(404, 'Fichier introuvable.');
         }
 
-        return Storage::disk('public')->download($rapport->path, $rapport->titre . '.pdf');
+        return $disk->download($rapport->path, $rapport->titre . '.pdf');
     }
 
     /**

@@ -38,12 +38,12 @@
                     <div>
                         <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Type de rapport <span
                                 class="text-red-500">*</span></label>
-                        <select name="type" id="type" required readonly
-                            class="w-full rounded-lg border-gray-300 bg-gray-100 cursor-not-allowed shadow-sm">
-                            <option value="execution" selected>Rapport d'exécution (Individuel)</option>
-                            <!-- Global report temporarily disabled -->
+                        <select name="type" id="type" required
+                            class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
+                            <option value="etape" selected>Rapport d'Étape (Avancement partiel)</option>
+                            <option value="final">Rapport Final d'Exécution (Clôture)</option>
                         </select>
-                        <p class="text-xs text-gray-500 mt-1">Pour le moment, seul le rapport d'exécution par recommandation est disponible.</p>
+                        <p class="text-xs text-gray-500 mt-1">Choisissez si ce rapport atteste d'une exécution partielle (en cours) ou totale (finie).</p>
                     </div>
 
                     <!-- Recommandation (Obligatoire pour rapport d'exécution) -->
